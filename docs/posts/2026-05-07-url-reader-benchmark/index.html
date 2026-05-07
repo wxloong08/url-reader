@@ -1,251 +1,309 @@
 <!DOCTYPE html>
-<html lang="en" dir="auto" data-theme="auto">
+<html lang="zh-cn" dir="ltr">
+    <head><meta charset='utf-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content="前言\r上一篇博客介绍了我写的 url-reader——一个多策略网页抓取工具。文章里提到了&quot;中文站成功率 ~90%&ldquo;但没给具体数据。这篇补上基准测试的方法论和第一轮数据。\n">
+<title>url-reader Benchmark：测试方法论与初步数据</title>
 
-<head><meta charset="utf-8">
-<meta http-equiv="X-UA-Compatible" content="IE=edge">
-<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<meta name="robots" content="index, follow">
-<title>url-reader Benchmark：测试方法论与初步数据 | wxloong08</title>
-<meta name="keywords" content="engineering, benchmark">
-<meta name="description" content="前言
-上一篇博客介绍了我写的 url-reader——一个多策略网页抓取工具。文章里提到了&quot;中文站成功率 ~90%&ldquo;但没给具体数据。这篇补上基准测试的方法论和第一轮数据。">
-<meta name="author" content="wxloong08">
+
 <link rel="canonical" href="https://blog.visionloong.com/posts/2026-05-07-url-reader-benchmark/">
-<link crossorigin="anonymous" href="/assets/css/stylesheet.84fa7cad4ac788a7a4b78f2470af93d5f01e0c73d96dfd059c570dc91f7f8d1d.css" integrity="sha256-hPp8rUrHiKekt48kcK&#43;T1fAeDHPZbf0FnFcNyR9/jR0=" rel="preload stylesheet" as="style">
-<link rel="icon" href="https://blog.visionloong.com/favicon.ico">
-<link rel="icon" type="image/png" sizes="16x16" href="https://blog.visionloong.com/favicon-16x16.png">
-<link rel="icon" type="image/png" sizes="32x32" href="https://blog.visionloong.com/favicon-32x32.png">
-<link rel="apple-touch-icon" href="https://blog.visionloong.com/apple-touch-icon.png">
-<link rel="mask-icon" href="https://blog.visionloong.com/safari-pinned-tab.svg">
-<meta name="theme-color" content="#2e2e33">
-<meta name="msapplication-TileColor" content="#2e2e33">
-<link rel="alternate" hreflang="en" href="https://blog.visionloong.com/posts/2026-05-07-url-reader-benchmark/">
-<noscript>
-    <style>
-        #theme-toggle,
-        .top-link {
-            display: none;
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap">
+
+
+<link rel="stylesheet" href="/scss/style.min.59c5eb617b2b83358d0baf163162325d5249a2be44239b430beb29a87c1ddbe4.css"><meta property='og:title' content="url-reader Benchmark：测试方法论与初步数据">
+<meta property='og:description' content="前言\r上一篇博客介绍了我写的 url-reader——一个多策略网页抓取工具。文章里提到了&quot;中文站成功率 ~90%&ldquo;但没给具体数据。这篇补上基准测试的方法论和第一轮数据。\n">
+<meta property='og:url' content='https://blog.visionloong.com/posts/2026-05-07-url-reader-benchmark/'>
+<meta property='og:site_name' content='wxloong08'>
+<meta property='og:type' content='article'><meta property='article:section' content='Posts' /><meta property='article:tag' content='engineering' /><meta property='article:tag' content='benchmark' /><meta property='article:published_time' content='2026-05-07T00:00:00&#43;00:00'/><meta property='article:modified_time' content='2026-05-07T00:00:00&#43;00:00'/>
+<meta name="twitter:title" content="url-reader Benchmark：测试方法论与初步数据">
+<meta name="twitter:description" content="前言\r上一篇博客介绍了我写的 url-reader——一个多策略网页抓取工具。文章里提到了&quot;中文站成功率 ~90%&ldquo;但没给具体数据。这篇补上基准测试的方法论和第一轮数据。\n">
+    <link rel="shortcut icon" href="/favicon.svg" />
+
+    </head>
+    <body class="
+    article-page
+    ">
+    <script>
+        (function() {
+            const colorSchemeKey = 'StackColorScheme';
+            if(!localStorage.getItem(colorSchemeKey)){
+                localStorage.setItem(colorSchemeKey, "auto");
+            }
+        })();
+    </script><script>
+    (function() {
+        const colorSchemeKey = 'StackColorScheme';
+        const colorSchemeItem = localStorage.getItem(colorSchemeKey);
+        const supportDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches === true;
+
+        if (colorSchemeItem == 'dark' || colorSchemeItem === 'auto' && supportDarkMode) {
+            
+
+            document.documentElement.dataset.scheme = 'dark';
+        } else {
+            document.documentElement.dataset.scheme = 'light';
         }
-
-    </style>
-    <style>
-        @media (prefers-color-scheme: dark) {
-            :root {
-                --theme: rgb(29, 30, 32);
-                --entry: rgb(46, 46, 51);
-                --primary: rgb(218, 218, 219);
-                --secondary: rgb(155, 156, 157);
-                --tertiary: rgb(65, 66, 68);
-                --content: rgb(196, 196, 197);
-                --code-block-bg: rgb(46, 46, 51);
-                --code-bg: rgb(55, 56, 62);
-                --border: rgb(51, 51, 51);
-                color-scheme: dark;
-            }
-
-            .list {
-                background: var(--theme);
-            }
-
-            .toc {
-                background: var(--entry);
-            }
-        }
-
-    </style>
-</noscript>
-<script>
-    if (localStorage.getItem("pref-theme") === "dark") {
-        document.querySelector("html").dataset.theme = 'dark';
-    } else if (localStorage.getItem("pref-theme") === "light") {
-       document.querySelector("html").dataset.theme = 'light';
-    } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-        document.querySelector("html").dataset.theme = 'dark';
-    } else {
-        document.querySelector("html").dataset.theme = 'light';
-    }
-
-</script><meta property="og:url" content="https://blog.visionloong.com/posts/2026-05-07-url-reader-benchmark/">
-  <meta property="og:site_name" content="wxloong08">
-  <meta property="og:title" content="url-reader Benchmark：测试方法论与初步数据">
-  <meta property="og:description" content="前言 上一篇博客介绍了我写的 url-reader——一个多策略网页抓取工具。文章里提到了&#34;中文站成功率 ~90%“但没给具体数据。这篇补上基准测试的方法论和第一轮数据。">
-  <meta property="og:locale" content="zh_cn">
-  <meta property="og:type" content="article">
-    <meta property="article:section" content="posts">
-    <meta property="article:published_time" content="2026-05-07T00:00:00+00:00">
-    <meta property="article:modified_time" content="2026-05-07T00:00:00+00:00">
-    <meta property="article:tag" content="Engineering">
-    <meta property="article:tag" content="Benchmark">
-
-  <meta name="twitter:card" content="summary">
-  <meta name="twitter:title" content="url-reader Benchmark：测试方法论与初步数据">
-  <meta name="twitter:description" content="前言 上一篇博客介绍了我写的 url-reader——一个多策略网页抓取工具。文章里提到了&#34;中文站成功率 ~90%“但没给具体数据。这篇补上基准测试的方法论和第一轮数据。">
-
-
-<script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@type": "BreadcrumbList",
-  "itemListElement": [
-    {
-      "@type": "ListItem",
-      "position":  1 ,
-      "name": "Posts",
-      "item": "https://blog.visionloong.com/posts/"
-    }, 
-    {
-      "@type": "ListItem",
-      "position":  2 ,
-      "name": "url-reader Benchmark：测试方法论与初步数据",
-      "item": "https://blog.visionloong.com/posts/2026-05-07-url-reader-benchmark/"
-    }
-  ]
-}
+    })();
 </script>
-<script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@type": "BlogPosting",
-  "headline": "url-reader Benchmark：测试方法论与初步数据",
-  "name": "url-reader Benchmark：测试方法论与初步数据",
-  "description": "前言 上一篇博客介绍了我写的 url-reader——一个多策略网页抓取工具。文章里提到了\u0026quot;中文站成功率 ~90%\u0026ldquo;但没给具体数据。这篇补上基准测试的方法论和第一轮数据。\n",
-  "keywords": [
-    "engineering", "benchmark"
-  ],
-  "articleBody": "前言 上一篇博客介绍了我写的 url-reader——一个多策略网页抓取工具。文章里提到了\"中文站成功率 ~90%“但没给具体数据。这篇补上基准测试的方法论和第一轮数据。\n坦白说，目前只测了 3 个 URL，样本量很小。这篇更多是分享测试方法——怎么衡量一个抓取工具的好坏——而不是给出最终结论。后续我会扩大样本量并更新数据。\n测试设计 一个网页抓取工具的价值可以从三个维度衡量：\n成功率：能不能拿到有效内容（不是反爬页面、不是空白） 策略效率：哪个策略实际完成了任务（反映策略链设计是否合理） Token 压缩率：清洗后去掉了多少无用字符 每次测试记录：URL → 平台识别 → 实际命中策略 → 耗时 → 原始字符数 → 清洗后字符数。\n测试 URL（第一轮） 平台 URL 类型 知乎问答 /question/10434775822 问答 Reddit /r/ClaudeAI/comments/1qfosa6 论坛 SSDNodes 博客 /blog/claude-code-pricing-2026 技术博客 这三个 URL 是我们在 Claude Code 实际调研中访问过的，不是专门选的 benchmark 样本——这其实更接近真实使用场景。\n还没测的平台：V2EX、NodeSeek、HostLoc、微信公众号——这些是下一轮要补的。\n测试环境 Firecrawl API Key: 已配置 (免费层 500 页/月)\rOpenCLI: opencli.cmd 0.0.0\rJina Reader: r.jina.ai (免费)\rPlaywright: Chromium headless (本轮未触发)\r操作系统: Windows 11\r网络: 国内家庭宽带 (经过代理) 注意这个网络环境——测试结果会受代理质量影响。如果你在海外或有更好的线路，数字可能不同。\n结果 第一轮 (2026-05-07) URL 平台 命中策略 耗时 字符压缩 知乎 /question/10434775822 知乎 OpenCLI Browser 11.4s ~42%* Reddit /r/ClaudeAI/comments/1qfosa6 Reddit OpenCLI Browser 13.7s ~38%* SSDNodes /blog/claude-code-pricing 通用 Firecrawl 1.3s 7%† * 知乎问答的数据来自清洗前后对比——原始 OpenCLI 输出包含大量导航和侧栏，清洗后只剩问答正文。 † Firecrawl 返回的本身就是干净的 Markdown，清洗空间很小。7% 只是去掉了页脚版权声明。这不代表清洗功能没用，而是 Firecrawl 已经做了大部分去噪工作。\n策略命中 OpenCLI Browser ████████ 2 次 (知乎, Reddit)\rFirecrawl ████ 1 次 (SSDNodes)\rJina Reader 无 0 次 (Reddit 被屏蔽, 知乎 451)\rPlaywright 无 0 次 (未触发, 前序策略全部成功) Jina Reader 本轮零命中——Reddit 返回了 “You’ve been blocked”，知乎返回了 HTTP 451，两个都被反爬检测拦截然后降级到了 OpenCLI。这个结果和我之前的经验一致：对中文和 Reddit 内容，Jina 基本不可用。\n解读 有几个值得注意的点：\nOpenCLI 比预期可靠。 我最初把它作为 Playwright 之前的备选，但实际测试中它的成功率比 Jina 高得多——特别是对反爬严格的平台。代价是慢（10-15s vs Jina 的 2-3s），但对于 Claude Code 的上下文准备来说，多等 10 秒换来可靠的抓取结果，是值得的。\nFirecrawl 对反爬弱站无敌。 1.3 秒、干净 Markdown、零清洗——如果能用的起，这是最优方案。但免费额度 500 页/月，重度使用需要付费。\nJina 的价值在英文技术论坛。 虽然本轮没命中，但之前测试中 Jina 对 V2EX、LowEndTalk 这类站点的表现很好。它在策略链里的位置（第三优先级）是合理的——作为 Firecrawl 和 OpenCLI 之后的补充。\n接下来 扩大样本量到 10+ URL（包括 V2EX、NodeSeek、微信公众号、HostLoc） 加入重复测试（同一个 URL 测试 3 次取平均，消除网络波动） 对比不同网络环境下的结果（国内直连 vs 走代理） 测一下并行抓取的性能 代码在 github.com/wxloong08/url-reader，benchmark 脚本在 scripts/benchmark.py。\n",
-  "wordCount" : "1281",
-  "inLanguage": "en",
-  "datePublished": "2026-05-07T00:00:00Z",
-  "dateModified": "2026-05-07T00:00:00Z",
-  "author":{
-    "@type": "Person",
-    "name": "wxloong08"
-  },
-  "mainEntityOfPage": {
-    "@type": "WebPage",
-    "@id": "https://blog.visionloong.com/posts/2026-05-07-url-reader-benchmark/"
-  },
-  "publisher": {
-    "@type": "Organization",
-    "name": "wxloong08",
-    "logo": {
-      "@type": "ImageObject",
-      "url": "https://blog.visionloong.com/favicon.ico"
-    }
-  }
-}
-</script>
-</head>
-<body id="top">
-    <header class="header">
-    <nav class="header-nav">
-        <div class="logo">
-            <a href="https://blog.visionloong.com/" accesskey="h" title="wxloong08 (Alt + H)">wxloong08</a>
-            <div class="logo-switches">
-                <button id="theme-toggle" class="theme-toggle" accesskey="t" title="(Alt + T)" aria-label="Toggle theme">
-                    <svg class="moon" xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24"
-                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                        stroke-linejoin="round">
-                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
-                    </svg>
-                    <svg class="sun" xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24"
-                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                        stroke-linejoin="round">
-                        <circle cx="12" cy="12" r="5"></circle>
-                        <line x1="12" y1="1" x2="12" y2="3"></line>
-                        <line x1="12" y1="21" x2="12" y2="23"></line>
-                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
-                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
-                        <line x1="1" y1="12" x2="3" y2="12"></line>
-                        <line x1="21" y1="12" x2="23" y2="12"></line>
-                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
-                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
-                    </svg>
-                </button>
-            </div>
+<div class="container main-container flex on-phone--column extended"><aside class="sidebar left-sidebar sticky ">
+    <button class="hamburger hamburger--spin" type="button" id="toggle-menu" aria-label="Toggle Menu">
+        <span class="hamburger-box">
+            <span class="hamburger-inner"></span>
+        </span>
+    </button>
+
+    <header>
+        
+        
+        <div class="site-meta">
+            <h1 class="site-name"><a href="/">wxloong08</a></h1>
+            <h2 class="site-description">AI 编程工具链 · VPS 架构 · 网页抓取</h2>
         </div>
-        <ul id="menu" class="menu">
-            <li>
-                <a href="https://blog.visionloong.com/posts/" title="文章">
-                    <span>文章</span>
-                </a>
-            </li>
-            <li>
-                <a href="https://blog.visionloong.com/about/" title="关于">
-                    <span>关于</span>
-                </a>
-            </li>
-            <li>
-                <a href="https://github.com/wxloong08" title="GitHub">
-                    <span>GitHub</span>&nbsp;
-                    <svg fill="none" shape-rendering="geometricPrecision" stroke="currentColor" stroke-linecap="round"
-                        stroke-linejoin="round" stroke-width="2.5" viewBox="0 0 24 24" height="12" width="12">
-                        <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"></path>
-                        <path d="M15 3h6v6"></path>
-                        <path d="M10 14L21 3"></path>
-                    </svg>
-                </a>
-            </li>
-        </ul>
-    </nav>
-</header>
-<main class="main">
+    </header><ol class="menu-social">
+            
+                <li>
+                    <a 
+                        href='https://github.com/wxloong08'
+                        
+                        title="GitHub"
+                        rel="me"
+                    >
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-link" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M10 14a3.5 3.5 0 0 0 5 0l4 -4a3.5 3.5 0 0 0 -5 -5l-.5 .5" />
+  <path d="M14 10a3.5 3.5 0 0 0 -5 0l-4 4a3.5 3.5 0 0 0 5 5l.5 -.5" />
+</svg>
 
-<article class="post-single">
-  <header class="post-header">
+
+
+                        
+                    </a>
+                </li>
+            
+        </ol><ol class="menu" id="main-menu">
+        
+        
+        
+        <li >
+            <a href='/' >
+                
+                <span>首页</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/posts/' >
+                
+                <span>文章</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/about/' >
+                
+                <span>关于</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='https://github.com/wxloong08' target="_blank">
+                
+                <span>GitHub</span>
+            </a>
+        </li>
+        
+        <li class="menu-bottom-section">
+            <ol class="menu">
+
+                
+                    <li id="dark-mode-toggle">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-left" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="8" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-right" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="16" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                        <span>Dark Mode</span>
+                    </li>
+                
+            </ol>
+        </li>
+    </ol>
+</aside>
+
+    <aside class="sidebar right-sidebar sticky">
+        
+            
+                
+    <section class="widget archives">
+        <div class="widget-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hash" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <line x1="5" y1="9" x2="19" y2="9" />
+  <line x1="5" y1="15" x2="19" y2="15" />
+  <line x1="11" y1="4" x2="7" y2="20" />
+  <line x1="17" y1="4" x2="13" y2="20" />
+</svg>
+
+
+
+        </div>
+        <h2 class="widget-title section-title">Table of contents</h2>
+        
+        <div class="widget--toc">
+            <nav class="toc-nav" id="TableOfContents">
+                
+  <ul>
+    <li><a href="#前言">前言</a></li>
+    <li><a href="#测试设计">测试设计</a></li>
+    <li><a href="#测试-url第一轮">测试 URL（第一轮）</a></li>
+    <li><a href="#测试环境">测试环境</a></li>
+    <li><a href="#结果">结果</a>
+      <ul>
+        <li><a href="#第一轮-2026-05-07">第一轮 (2026-05-07)</a></li>
+        <li><a href="#策略命中">策略命中</a></li>
+      </ul>
+    </li>
+    <li><a href="#解读">解读</a></li>
+    <li><a href="#接下来">接下来</a></li>
+  </ul>
+
+            </nav>
+        </div>
+    </section>
+
+            
+        
+    </aside>
+
+
+            <main class="main full-width">
+    <article class="main-article">
+    <header class="article-header">
+
+    <div class="article-details">
     
-    <h1 class="post-title entry-hint-parent">
-      url-reader Benchmark：测试方法论与初步数据
-    </h1>
-    <div class="post-meta">
 
-<span title='2026-05-07 00:00:00 +0000 UTC'>May 7, 2026</span>&nbsp;·&nbsp;<span>3 min</span>&nbsp;·&nbsp;<span>wxloong08</span>
-
-</div>
-  </header> <details class="toc" >
-    <summary accesskey="c" title="(Alt + C)">
-        <span class="title">Table of Contents</span>
-    </summary>
-
-    <div class="inner"><ul>
-            <li>
-                <a href="#%e5%89%8d%e8%a8%80" aria-label="前言">前言</a></li>
-            <li>
-                <a href="#%e6%b5%8b%e8%af%95%e8%ae%be%e8%ae%a1" aria-label="测试设计">测试设计</a></li>
-            <li>
-                <a href="#%e6%b5%8b%e8%af%95-url%e7%ac%ac%e4%b8%80%e8%bd%ae" aria-label="测试 URL（第一轮）">测试 URL（第一轮）</a></li>
-            <li>
-                <a href="#%e6%b5%8b%e8%af%95%e7%8e%af%e5%a2%83" aria-label="测试环境">测试环境</a></li>
-            <li>
-                <a href="#%e7%bb%93%e6%9e%9c" aria-label="结果">结果</a><ul>
-                    
-            <li>
-                <a href="#%e7%ac%ac%e4%b8%80%e8%bd%ae-2026-05-07" aria-label="第一轮 (2026-05-07)">第一轮 (2026-05-07)</a></li>
-            <li>
-                <a href="#%e7%ad%96%e7%95%a5%e5%91%bd%e4%b8%ad" aria-label="策略命中">策略命中</a></li></ul>
-            </li>
-            <li>
-                <a href="#%e8%a7%a3%e8%af%bb" aria-label="解读">解读</a></li>
-            <li>
-                <a href="#%e6%8e%a5%e4%b8%8b%e6%9d%a5" aria-label="接下来">接下来</a>
-            </li>
-        </ul>
+    <div class="article-title-wrapper">
+        <h2 class="article-title">
+            <a href="/posts/2026-05-07-url-reader-benchmark/">url-reader Benchmark：测试方法论与初步数据</a>
+        </h2>
+    
+        
     </div>
-</details>
 
-  <div class="post-content md-content"><h2 id="前言">前言<a hidden class="anchor" aria-hidden="true" href="#前言">#</a></h2>
-<p>上一篇博客介绍了我写的 url-reader——一个多策略网页抓取工具。文章里提到了&quot;中文站成功率 ~90%&ldquo;但没给具体数据。这篇补上基准测试的方法论和第一轮数据。</p>
+    
+    
+    
+    
+    
+    
+    
+    <footer class="article-meta">
+        
+            <div class="inline-meta">
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar-time" width="56" height="56" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M11.795 21h-6.795a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v4" />
+  <circle cx="18" cy="18" r="4" />
+  <path d="M15 3v4" />
+  <path d="M7 3v4" />
+  <path d="M3 11h16" />
+  <path d="M18 16.496v1.504l1 1" />
+</svg>
+                    <time class="article-time--published" datetime='2026-05-07T00:00:00Z'>2026-05-07</time>
+                
+
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-clock" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <polyline points="12 7 12 12 15 15" />
+</svg>
+
+
+
+                    <time class="article-time--reading">
+                        3 minutes read
+                    </time>
+                
+            </div>
+        
+
+        
+
+        
+    </footer>
+    
+</div>
+
+</header>
+
+    
+    <aside class="article-toc">
+        <details>
+            <summary>
+                <div class="article-toc-title">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-chevron-right"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M9 6l6 6l-6 6" /></svg>
+                    <span>Table of contents</span>
+                </div>
+            </summary>
+            <nav class="toc-nav">
+                
+  <ul>
+    <li><a href="#前言">前言</a></li>
+    <li><a href="#测试设计">测试设计</a></li>
+    <li><a href="#测试-url第一轮">测试 URL（第一轮）</a></li>
+    <li><a href="#测试环境">测试环境</a></li>
+    <li><a href="#结果">结果</a>
+      <ul>
+        <li><a href="#第一轮-2026-05-07">第一轮 (2026-05-07)</a></li>
+        <li><a href="#策略命中">策略命中</a></li>
+      </ul>
+    </li>
+    <li><a href="#解读">解读</a></li>
+    <li><a href="#接下来">接下来</a></li>
+  </ul>
+
+            </nav>
+        </details>
+    </aside>
+    
+
+    <section class="article-content">
+    
+    
+    <h2 id="前言">前言
+</h2><p>上一篇博客介绍了我写的 url-reader——一个多策略网页抓取工具。文章里提到了&quot;中文站成功率 ~90%&ldquo;但没给具体数据。这篇补上基准测试的方法论和第一轮数据。</p>
 <p>坦白说，目前只测了 3 个 URL，样本量很小。这篇更多是分享测试方法——怎么衡量一个抓取工具的好坏——而不是给出最终结论。后续我会扩大样本量并更新数据。</p>
-<h2 id="测试设计">测试设计<a hidden class="anchor" aria-hidden="true" href="#测试设计">#</a></h2>
-<p>一个网页抓取工具的价值可以从三个维度衡量：</p>
+<h2 id="测试设计">测试设计
+</h2><p>一个网页抓取工具的价值可以从三个维度衡量：</p>
 <ol>
 <li><strong>成功率</strong>：能不能拿到有效内容（不是反爬页面、不是空白）</li>
 <li><strong>策略效率</strong>：哪个策略实际完成了任务（反映策略链设计是否合理）</li>
 <li><strong>Token 压缩率</strong>：清洗后去掉了多少无用字符</li>
 </ol>
 <p>每次测试记录：URL → 平台识别 → 实际命中策略 → 耗时 → 原始字符数 → 清洗后字符数。</p>
-<h2 id="测试-url第一轮">测试 URL（第一轮）<a hidden class="anchor" aria-hidden="true" href="#测试-url第一轮">#</a></h2>
-<table>
+<h2 id="测试-url第一轮">测试 URL（第一轮）
+</h2><div class="table-wrapper"><table>
   <thead>
       <tr>
           <th>平台</th>
@@ -270,20 +328,20 @@
           <td>技术博客</td>
       </tr>
   </tbody>
-</table>
+</table></div>
 <p>这三个 URL 是我们在 Claude Code 实际调研中访问过的，不是专门选的 benchmark 样本——这其实更接近真实使用场景。</p>
 <p>还没测的平台：V2EX、NodeSeek、HostLoc、微信公众号——这些是下一轮要补的。</p>
-<h2 id="测试环境">测试环境<a hidden class="anchor" aria-hidden="true" href="#测试环境">#</a></h2>
-<pre tabindex="0"><code>Firecrawl API Key: 已配置 (免费层 500 页/月)
+<h2 id="测试环境">测试环境
+</h2><pre tabindex="0"><code>Firecrawl API Key: 已配置 (免费层 500 页/月)
 OpenCLI: opencli.cmd 0.0.0
 Jina Reader: r.jina.ai (免费)
 Playwright: Chromium headless (本轮未触发)
 操作系统: Windows 11
 网络: 国内家庭宽带 (经过代理)
 </code></pre><p>注意这个网络环境——测试结果会受代理质量影响。如果你在海外或有更好的线路，数字可能不同。</p>
-<h2 id="结果">结果<a hidden class="anchor" aria-hidden="true" href="#结果">#</a></h2>
-<h3 id="第一轮-2026-05-07">第一轮 (2026-05-07)<a hidden class="anchor" aria-hidden="true" href="#第一轮-2026-05-07">#</a></h3>
-<table>
+<h2 id="结果">结果
+</h2><h3 id="第一轮-2026-05-07">第一轮 (2026-05-07)
+</h3><div class="table-wrapper"><table>
   <thead>
       <tr>
           <th>URL</th>
@@ -316,173 +374,132 @@ Playwright: Chromium headless (本轮未触发)
           <td>7%†</td>
       </tr>
   </tbody>
-</table>
+</table></div>
 <p>* 知乎问答的数据来自清洗前后对比——原始 OpenCLI 输出包含大量导航和侧栏，清洗后只剩问答正文。
 † Firecrawl 返回的本身就是干净的 Markdown，清洗空间很小。7% 只是去掉了页脚版权声明。这不代表清洗功能没用，而是 Firecrawl 已经做了大部分去噪工作。</p>
-<h3 id="策略命中">策略命中<a hidden class="anchor" aria-hidden="true" href="#策略命中">#</a></h3>
-<pre tabindex="0"><code>OpenCLI Browser  ████████ 2 次 (知乎, Reddit)
+<h3 id="策略命中">策略命中
+</h3><pre tabindex="0"><code>OpenCLI Browser  ████████ 2 次 (知乎, Reddit)
 Firecrawl        ████     1 次 (SSDNodes)
 Jina Reader      无       0 次 (Reddit 被屏蔽, 知乎 451)
 Playwright       无       0 次 (未触发, 前序策略全部成功)
 </code></pre><p>Jina Reader 本轮零命中——Reddit 返回了 &ldquo;You&rsquo;ve been blocked&rdquo;，知乎返回了 HTTP 451，两个都被反爬检测拦截然后降级到了 OpenCLI。这个结果和我之前的经验一致：<strong>对中文和 Reddit 内容，Jina 基本不可用。</strong></p>
-<h2 id="解读">解读<a hidden class="anchor" aria-hidden="true" href="#解读">#</a></h2>
-<p>有几个值得注意的点：</p>
+<h2 id="解读">解读
+</h2><p>有几个值得注意的点：</p>
 <p><strong>OpenCLI 比预期可靠。</strong> 我最初把它作为 Playwright 之前的备选，但实际测试中它的成功率比 Jina 高得多——特别是对反爬严格的平台。代价是慢（10-15s vs Jina 的 2-3s），但对于 Claude Code 的上下文准备来说，多等 10 秒换来可靠的抓取结果，是值得的。</p>
 <p><strong>Firecrawl 对反爬弱站无敌。</strong> 1.3 秒、干净 Markdown、零清洗——如果能用的起，这是最优方案。但免费额度 500 页/月，重度使用需要付费。</p>
 <p><strong>Jina 的价值在英文技术论坛。</strong> 虽然本轮没命中，但之前测试中 Jina 对 V2EX、LowEndTalk 这类站点的表现很好。它在策略链里的位置（第三优先级）是合理的——作为 Firecrawl 和 OpenCLI 之后的补充。</p>
-<h2 id="接下来">接下来<a hidden class="anchor" aria-hidden="true" href="#接下来">#</a></h2>
-<ol>
+<h2 id="接下来">接下来
+</h2><ol>
 <li>扩大样本量到 10+ URL（包括 V2EX、NodeSeek、微信公众号、HostLoc）</li>
 <li>加入重复测试（同一个 URL 测试 3 次取平均，消除网络波动）</li>
 <li>对比不同网络环境下的结果（国内直连 vs 走代理）</li>
 <li>测一下并行抓取的性能</li>
 </ol>
-<p>代码在 <a href="https://github.com/wxloong08/url-reader">github.com/wxloong08/url-reader</a>，benchmark 脚本在 <code>scripts/benchmark.py</code>。</p>
+<p>代码在 <a class="link" href="https://github.com/wxloong08/url-reader"  target="_blank" rel="noopener"
+    >github.com/wxloong08/url-reader</a>，benchmark 脚本在 <code>scripts/benchmark.py</code>。</p>
+
+</section>
 
 
-  </div>
+    <footer class="article-meta article-footer">
+    
+    <section class="article-tags">
+        
+            <a href="/tags/engineering/">Engineering</a>
+        
+            <a href="/tags/benchmark/">Benchmark</a>
+        
+    </section>
 
-  <footer class="post-footer">
-    <ul class="post-tags">
-      <li><a href="https://blog.visionloong.com/tags/engineering/">Engineering</a></li>
-      <li><a href="https://blog.visionloong.com/tags/benchmark/">Benchmark</a></li>
-    </ul>
-<nav class="paginav">
-  <a class="next" href="https://blog.visionloong.com/posts/2026-05-07-searxng-url-reader-workflow/">
-    <span class="title">Next »</span>
-    <span>让 Claude Code 的搜索更好用：SearXNG &#43; url-reader 工作流</span>
-  </a>
-</nav>
 
-  </footer>
+    </footer>
+
+
+    
 </article>
-    </main>
-    
-<footer class="footer">
-        <span>&copy; 2026 <a href="https://blog.visionloong.com/">wxloong08</a></span> · 
 
     
+
     
-    <span>
-        Powered by
-        <a href="https://gohugo.io/?utm_source=papermod" rel="noopener" target="_blank">Hugo</a> &
-        <a href="https://github.com/adityatelange/hugo-PaperMod/" rel="noopener" target="_blank">PaperMod</a>
-    </span>
+
+<aside>
+    <h2 class="section-title">Related content</h2>
+    <div class="subsection-list">
+        <div class="article-list--tile">
+            
+                
+<article class="">
+    <a href="/posts/2026-05-07-searxng-url-reader-workflow/">
+        
+
+        <div class="article-details">
+            <h2 class="article-title">让 Claude Code 的搜索更好用：SearXNG &#43; url-reader 工作流</h2>
+        </div>
+    </a>
+</article>
+            
+        </div>
+    </div>
+</aside>
+
+     
+    
+        
+
+
+    
+
+    <footer class="site-footer">
+    <section class="copyright">
+        &copy; 
+        
+        2026 wxloong08
+    </section>
+    
+    <section class="powerby">
+        Built with <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> <br />
+        Theme <b><a href="https://github.com/CaiJimmy/hugo-theme-stack" target="_blank" rel="noopener" data-version="4.0.2">Stack</a></b> designed by <a href="https://jimmycai.com" target="_blank" rel="noopener">Jimmy</a>
+    </section>
 </footer>
-<a href="#top" id="top-link" class="top-link hidden" aria-label="go to top" title="Go to Top (Alt + G)" accesskey="g">
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-        stroke-linecap="round" stroke-linejoin="round" class="feather feather-chevrons-up">
-        <polyline points="17 11 12 6 7 11"></polyline>
-        <polyline points="17 18 12 13 7 18"></polyline>
-    </svg>
-</a>
 
-<script>
-    let menu = document.getElementById('menu');
-    if (menu) {
-        
-        const scrollPosition = localStorage.getItem("menu-scroll-position");
-        if (scrollPosition) {
-            menu.scrollLeft = parseInt(scrollPosition, 10);
-        }
-        
-        menu.onscroll = function () {
-            localStorage.setItem("menu-scroll-position", menu.scrollLeft);
-        }
+
+    
+
+
+
+<script type="module">
+    import gallery from '\/ts\/gallery.js';
+
+    const articleContent = document.querySelector('.article-content');
+    const shouldLoad = articleContent && (articleContent.querySelectorAll('figure').length > 0 || articleContent.querySelectorAll('img.gallery-image').length > 0);
+    
+    if (shouldLoad) {
+        gallery(articleContent);
+
+        const PhotoSwipeLightbox = (await import("https:\/\/cdn.jsdelivr.net\/npm\/photoswipe@5.4.4\/dist\/photoswipe-lightbox.esm.min.js")).default;
+        const styleHref = "https:\/\/cdn.jsdelivr.net\/npm\/photoswipe@5.4.4\/dist\/photoswipe.css";
+
+        const styleTag = document.createElement('link');
+        styleTag.rel = 'stylesheet';
+        styleTag.href = styleHref;
+        document.head.appendChild(styleTag);
+
+        const lightbox = new PhotoSwipeLightbox({
+            gallerySelector: '.article-content',
+            childSelector: 'figure a.image-link',
+            pswpModule: () => import("https:\/\/cdn.jsdelivr.net\/npm\/photoswipe@5.4.4\/dist\/photoswipe.esm.min.js")
+        });
+        lightbox.init();
     }
-
-    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-        anchor.addEventListener("click", function (e) {
-            e.preventDefault();
-            var id = this.getAttribute("href").substr(1);
-            if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView({
-                    behavior: "smooth"
-                });
-            } else {
-                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView();
-            }
-            if (id === "top") {
-                history.replaceState(null, null, " ");
-            } else {
-                history.pushState(null, null, `#${id}`);
-            }
-        });
-    });
-
 </script>
-<script>
-    var toplink = document.getElementById("top-link");
-    window.onscroll = function () {
-        const scrollThreshold = window.innerHeight;
-        if (document.body.scrollTop > scrollThreshold || document.documentElement.scrollTop > scrollThreshold) {
-            toplink.classList.remove("hidden");
-        } else {
-            toplink.classList.add("hidden");
-        }
-    };
 
-</script>
-<script>
-    document.getElementById("theme-toggle").addEventListener("click", () => {
-        const html = document.querySelector("html");
-        if (html.dataset.theme === "dark") {
-            html.dataset.theme = 'light';
-            localStorage.setItem("pref-theme", 'light');
-        } else {
-            html.dataset.theme = 'dark';
-            localStorage.setItem("pref-theme", 'dark');
-        }
-    })
+    
 
-</script>
-<script>
-    document.querySelectorAll('pre > code').forEach((codeblock) => {
-        const container = codeblock.parentNode.parentNode;
+            </main>
+        </div>
+        
+<script type="text/javascript" src="/ts/main.1ff1e5fdc4e178ed422e50aa407526dc552f26342d729343fded19416194382c.js" defer></script>
 
-        const copybutton = document.createElement('button');
-        copybutton.classList.add('copy-code');
-        copybutton.innerHTML = 'copy';
 
-        function copyingDone() {
-            copybutton.innerHTML = 'copied!';
-            setTimeout(() => {
-                copybutton.innerHTML = 'copy';
-            }, 2000);
-        }
-
-        copybutton.addEventListener('click', (cb) => {
-            if ('clipboard' in navigator) {
-                navigator.clipboard.writeText(codeblock.textContent);
-                copyingDone();
-                return;
-            }
-
-            const range = document.createRange();
-            range.selectNodeContents(codeblock);
-            const selection = window.getSelection();
-            selection.removeAllRanges();
-            selection.addRange(range);
-            try {
-                document.execCommand('copy');
-                copyingDone();
-            } catch (e) { };
-            selection.removeRange(range);
-        });
-
-        if (container.classList.contains("highlight")) {
-            container.appendChild(copybutton);
-        } else if (container.parentNode.firstChild == container) {
-            
-        } else if (codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.nodeName == "TABLE") {
-            
-            codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.appendChild(copybutton);
-        } else {
-            
-            codeblock.parentNode.appendChild(copybutton);
-        }
-    });
-</script>
-</body>
-
+    </body>
 </html>
