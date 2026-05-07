@@ -1,79 +1,337 @@
-# URL Reader - 智能网页内容读取器
+# URL Reader
 
-> Forked from [yhslgg-arch/url-reader](https://github.com/yhslgg-arch/url-reader)，在此基础上做了大量扩展。
+> Forked from [yhslgg-arch/url-reader](https://github.com/yhslgg-arch/url-reader)，在原项目基础上扩展了平台识别、论坛清洗、`OpenCLI` 回退和更适合 LLM 调研的保存格式。
 
-读取任意 URL 内容，自动识别平台类型，智能选择最佳读取策略，自动保存内容和图片到本地。
+`url-reader` 用来读取公开网页内容，并把结果整理成尽量干净的 Markdown。  
+它不是“万能爬虫”，而是一个带平台识别、策略回退和内容清洗的读取流水线。
 
-## 功能特点
+## 现在到底能做什么
 
-- **智能平台识别**：微信公众号、小红书、今日头条、抖音、淘宝、天猫、京东、百度、知乎、微博、X、B站、Reddit、MeowVPS、HostLoc、NodeSeek、LINUX DO、V2EX、LowEndTalk、LowEndSpirit
-- **多策略读取**：Firecrawl → OpenCLI → Jina → Playwright，按平台自动选择优先级。未配置 API Key 或未安装依赖时自动跳过不可用策略
-- **Markdown 输出**：干净的 Markdown 格式，含 YAML front matter
-- **自动保存**：内容 + 图片下载到本地，图片 URL 自动替换为本地路径
-- **平台感知**：图片下载自动匹配正确的 Referer
+- 识别常见内容站、论坛站和社交站点
+- 按平台优先级尝试多种读取策略
+- 对部分平台做专门清洗，而不是只返回原始网页 dump
+- 保存 Markdown 和图片到本地
+- 对论坛和问答页尽量保留“正文 / 回复 / 回答”结构，方便后续给 LLM 做摘要、调研、对比
 
-## 快速开始
+## 读取流程
+
+实际流程是：
+
+```text
+URL
+  -> 平台识别
+  -> 按该平台自己的策略顺序依次尝试
+  -> 内容后处理 / 清洗
+  -> 格式化
+  -> 可选保存
+```
+
+注意：
+
+- 没有“全局固定策略顺序”。
+- 每个平台的策略顺序都定义在 [scripts/platforms.py](scripts/platforms.py)。
+- 某些策略在本机不可用时会失败回退，但只有 `firecrawl` 会在进入主循环前被预过滤。
+
+## 当前策略
+
+### 1. Firecrawl
+
+- 适合 JS 较重、Jina 不稳定的站点
+- 需要同时满足：
+  - 已安装 `firecrawl-py`
+  - 已设置 `FIRECRAWL_API_KEY`
+- 如果缺包或缺 Key，会被直接跳过
+
+### 2. Jina Reader
+
+- 对公开网页最省事
+- 不需要 API Key
+- 对部分站点可能返回 `451`、摘要页或带较多噪音的正文
+
+### 3. OpenCLI Browser
+
+- 复用本机 `opencli browser extract`
+- 适合“网页公开可见，但 Jina / Playwright 不稳定”的场景
+- 当前对 `知乎 question` 页特别有用
+- 需要本机安装 `opencli`
+
+### 4. Playwright
+
+- 本地浏览器渲染兜底
+- 适合需要真实浏览器环境的站点
+- 微信可配合登录态使用
+- 需要安装 `playwright` 和 `chromium`
+
+## 平台支持
+
+下面分两层看，避免 README 把“显式识别”和“专门清洗”混成一回事。
+
+### 显式识别的平台
+
+- 微信公众号
+- 小红书
+- 今日头条
+- 抖音
+- 淘宝
+- 天猫
+- 京东
+- 百度 / 百家号
+- 知乎
+- 微博
+- X / Twitter
+- B站
+- Reddit
+- MeowVPS
+- HostLoc
+- NodeSeek
+- LINUX DO
+- V2EX
+- LowEndTalk
+- LowEndSpirit
+
+其余站点走 `generic` 兜底。
+
+### 有专门清洗 / 提取逻辑的平台
+
+#### 社交 / 问答
+
+- `X / Twitter`
+  - 去掉 `Article / Conversation / Replies / Related Posts` 包装
+  - 保留标题、作者、发布时间、图片、正文
+
+- `知乎 question`
+  - 只保留问题标题和当前已加载的公开回答
+  - 尽量移除关注数、浏览数、热榜、客户端下载、侧栏推荐、答主签名等噪音
+
+#### 论坛 / 社区
+
+- `NodeSeek`
+  - 主楼 / 回复分离
+  - 页脚、登录提示、导航噪音清理
+  - 低信息回复过滤
+
+- `HostLoc`
+  - Discuz 结构清理
+  - 主楼 / 回复分离
+  - 页尾和楼层噪音清理
+
+- `LINUX DO`
+  - 主题页主楼 / 回复分离
+  - Related topics 和论坛导航噪音清理
+
+- `V2EX`
+  - 主题页主楼 / 回复分离
+  - 推广块、推荐块、页脚噪音清理
+
+- `LowEndTalk / LowEndSpirit`
+  - Vanilla 风格论坛提取
+  - 支持额外分页回复补抓
+
+### 只做规则清洗的平台
+
+这些站点当前主要是“按规则删噪”，不是深度结构化提取：
+
+- 微信公众号
+- 小红书
+- 今日头条
+- 抖音
+- 淘宝 / 天猫 / 京东
+- 百度 / 知乎专栏类页面
+- 微博
+- B站
+- MeowVPS
+- Reddit
+
+其中 `Reddit` 目前是“显式识别 + 策略回退 + 通用清洗”，还没有专门的评论提取器。
+
+## 依赖安装
+
+最小依赖：
 
 ```bash
-# 安装依赖
-pip install firecrawl-py requests
+pip install requests
+```
 
-# 可选：Playwright（用于需要登录的平台）
-pip install playwright && playwright install chromium
+如果你要用 `.env`：
 
-# 读取 URL
-python -m scripts.main https://example.com
+```bash
+pip install python-dotenv
+```
 
-# 读取并保存
-python -m scripts.main https://example.com --save
+如果你要用 Firecrawl：
+
+```bash
+pip install firecrawl-py
+```
+
+如果你要用 Playwright：
+
+```bash
+pip install playwright
+playwright install chromium
+```
+
+如果你要用 OpenCLI Browser：
+
+```bash
+npm install -g @jackwener/opencli
 ```
 
 ## 配置
 
-优先在项目根目录创建 `.env` 文件（已 gitignored）：
+配置优先级：
+
+```text
+环境变量 > .env > config.json > 默认值
+```
+
+### `.env`
+
+只有安装了 `python-dotenv` 才会自动加载项目根目录的 `.env`。
+
+示例：
 
 ```bash
 FIRECRAWL_API_KEY=fc-YOUR_KEY
+URL_READER_OUTPUT_DIR=D:/url-reader-output
+URL_READER_TIMEOUT=30
+URL_READER_HEADLESS=true
+URL_READER_FORUM_MAX_PAGES=8
 ```
 
-也支持通过环境变量或 `config.json` 配置：
+### 支持的环境变量
 
-| 环境变量 | 说明 | 默认值 |
-|---------|------|--------|
-| `FIRECRAWL_API_KEY` | Firecrawl API 密钥 | (空) |
-| `URL_READER_OUTPUT_DIR` | 保存目录 | `~/url-reader-output` |
-| `URL_READER_TIMEOUT` | HTTP 超时秒数 | 30 |
-| `URL_READER_HEADLESS` | Playwright 无头模式 | true |
+| 变量 | 说明 | 默认值 |
+|---|---|---|
+| `FIRECRAWL_API_KEY` | Firecrawl API Key | 空 |
+| `URL_READER_JINA_BASE_URL` | Jina Reader 基础地址 | `https://r.jina.ai/` |
+| `URL_READER_OUTPUT_DIR` | 输出目录 | `~/url-reader-output` |
+| `URL_READER_TIMEOUT` | 超时秒数 | `30` |
+| `URL_READER_HEADLESS` | Playwright 是否无头 | `true` |
+| `URL_READER_FORUM_MAX_PAGES` | 论坛分页补抓上限 | `8` |
 
-## 架构
+### `config.json`
 
+也可以在项目根目录放一个 `config.json`：
+
+```json
+{
+  "firecrawl_api_key": "fc-YOUR_KEY",
+  "output_dir": "D:/url-reader-output",
+  "timeout": 30,
+  "headless": true,
+  "forum_max_pages": 8
+}
 ```
-URL 输入 → 平台识别 → 策略链（按平台优先级）→ 格式化 → 保存
+
+## 用法
+
+读取并打印：
+
+```bash
+python -m scripts.main "https://example.com"
 ```
 
-### 目录结构
+读取并保存：
 
+```bash
+python -m scripts.main "https://example.com" --save
 ```
+
+指定输出目录保存：
+
+```bash
+URL_READER_OUTPUT_DIR="D:/custom/output" python -m scripts.main "https://example.com" --save
+```
+
+微信登录态管理：
+
+```bash
+python -m scripts.wechat_auth setup
+python -m scripts.wechat_auth status
+```
+
+微信公众号长链接转短链接：
+
+```bash
+python -m scripts.url_converter "https://mp.weixin.qq.com/s?__biz=xxx&mid=xxx&sn=xxx"
+```
+
+## 输出格式
+
+默认保存目录结构：
+
+```text
+output-dir/
+└── 2026-01-30_文章标题/
+    ├── content.md
+    ├── img_01.jpg
+    ├── img_02.webp
+    └── ...
+```
+
+保存的 `content.md` 带 YAML front matter：
+
+```md
+---
+title: ...
+platform: ...
+url: ...
+saved_at: ...
+images: 2
+---
+```
+
+然后根据内容类型采用不同结构：
+
+- 社交帖：`Metadata / Images / Content`
+- 论坛帖：`Metadata / Thread / Replies`
+- 普通文章：保留清洗后的正文
+
+## 项目结构
+
+```text
 url-reader/
-├── skill.md                        # Claude 执行指南
 ├── README.md
+├── SKILL.md
 ├── metadata.json
+├── config.json                  # 可选，用户自建
+├── data/
+│   └── wechat_auth.json         # 微信登录态
+├── docs/
+├── tests/
 └── scripts/
-    ├── config.py                   # 配置（env > .env > config.json > defaults）
-    ├── platforms.py                # 平台识别 + 策略优先级
-    ├── content.py                  # 标题/图片提取
-    ├── formatter.py                # Markdown 格式化
-    ├── saver.py                    # 磁盘保存 + 图片下载
-    ├── wechat_auth.py              # WeChat 认证管理
-    ├── url_converter.py            # WeChat URL 转换
-    ├── main.py                     # 入口 / 编排器
+    ├── __init__.py
+    ├── config.py
+    ├── content.py
+    ├── formatter.py
+    ├── main.py
+    ├── platforms.py
+    ├── saver.py
+    ├── url_converter.py
+    ├── wechat_auth.py
     └── strategies/
-        ├── __init__.py             # FetchStrategy ABC
+        ├── __init__.py
         ├── firecrawl.py
         ├── jina.py
+        ├── opencli_browser.py
         └── playwright_strategy.py
+```
+
+## 已知限制
+
+- 公开网页可访问，不代表所有策略都能读到；不同策略的能力边界不同
+- `知乎 question` 只保留“当前已加载的公开回答”，不会自动拿到全部回答
+- `Reddit` 当前还没有专门的评论结构化提取器
+- `Playwright` 和 `OpenCLI Browser` 都依赖本机浏览器环境，CI 或纯服务器环境下未必稳定
+- 强反爬站点不保证稳定成功
+
+## 测试
+
+```bash
+python -m unittest tests.test_content tests.test_formatter tests.test_opencli_strategy
 ```
 
 ## License
 
-MIT — 原始版本 © ys (yhslgg-arch)，修改和扩展 © wxloong08。详见 [LICENSE](LICENSE)。
+MIT。原始版本 © ys (`yhslgg-arch`)，后续修改与扩展 © 本仓库维护者。详见 [LICENSE](LICENSE)。
