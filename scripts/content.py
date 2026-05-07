@@ -1252,6 +1252,8 @@ def _extract_zhihu_question_answers(markdown: str, metadata: dict) -> dict:
             **metadata,
             'title': title,
             'content_type': 'qa_answers',
+            'cleanup_chars_before': len(markdown.strip()),
+            'cleanup_chars_after': len(cleaned),
         },
     }
 

@@ -1,0 +1,9 @@
+title: "wxloong08 技术博客"
+description: "VPS 架构、代理运维、网页抓取与 AI 工具链实践"
+url: "https://blog.visionloong.xyz"
+remote_theme: jekyll/minima
+plugins:
+  - jekyll-feed
+  - jekyll-seo-tag
+minima:
+  skin: classic

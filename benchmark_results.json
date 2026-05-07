@@ -1,0 +1,41 @@
+[
+  {
+    "platform": "知乎问答",
+    "url": "https://www.zhihu.com/question/10434775822",
+    "strategy": "OpenCLI Browser",
+    "success": true,
+    "time_seconds": 11.4,
+    "raw_chars": 0,
+    "clean_chars": 0,
+    "raw_tokens_est": 0,
+    "clean_tokens_est": 0,
+    "char_reduction": "100%",
+    "cleanup_profile": "none"
+  },
+  {
+    "platform": "Reddit",
+    "url": "https://www.reddit.com/r/ClaudeAI/comments/1qfosa6/",
+    "strategy": "OpenCLI Browser",
+    "success": true,
+    "time_seconds": 13.7,
+    "raw_chars": 15760,
+    "clean_chars": 15680,
+    "raw_tokens_est": 3940,
+    "clean_tokens_est": 3920,
+    "char_reduction": "1%",
+    "cleanup_profile": "generic"
+  },
+  {
+    "platform": "技术博客(GitHub Pages)",
+    "url": "https://www.ssdnodes.com/blog/claude-code-pricing-in-2026-every-plan-explained-pro-max-api-teams/",
+    "strategy": "Firecrawl",
+    "success": true,
+    "time_seconds": 1.3,
+    "raw_chars": 28955,
+    "clean_chars": 26889,
+    "raw_tokens_est": 7238,
+    "clean_tokens_est": 6722,
+    "char_reduction": "7%",
+    "cleanup_profile": "generic"
+  }
+]
