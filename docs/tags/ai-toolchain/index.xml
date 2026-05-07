@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+  <channel>
+    <title>Ai-Toolchain on wxloong08</title>
+    <link>https://blog.visionloong.com/tags/ai-toolchain/</link>
+    <description>Recent content in Ai-Toolchain on wxloong08</description>
+    <generator>Hugo</generator>
+    <language>zh-cn</language>
+    <lastBuildDate>Thu, 07 May 2026 00:00:00 +0000</lastBuildDate>
+    <atom:link href="https://blog.visionloong.com/tags/ai-toolchain/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>让 Claude Code 的搜索更好用：SearXNG &#43; url-reader 工作流</title>
+      <link>https://blog.visionloong.com/posts/2026-05-07-searxng-url-reader-workflow/</link>
+      <pubDate>Thu, 07 May 2026 00:00:00 +0000</pubDate>
+      <guid>https://blog.visionloong.com/posts/2026-05-07-searxng-url-reader-workflow/</guid>
+      <description>&lt;h2 id=&#34;起因&#34;&gt;起因&lt;/h2&gt;
+&lt;p&gt;我在 Claude Code 里导入了 DeepSeek V4.0 Pro 来分担一些任务——有些代码生成场景 DS4 比 Sonnet 便宜，效果也够用。但问题来了：&lt;strong&gt;DS4 不支持 Claude Code 内置的 websearch 工具&lt;/strong&gt;。&lt;/p&gt;
+&lt;p&gt;这意味着让 DS4 做技术调研时，它没法自己搜索。解决方法是走 MCP——用 SearXNG 的 &lt;code&gt;searxng_web_search&lt;/code&gt; 来补上搜索能力。&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+  <channel>
+    <title>Benchmark on wxloong08</title>
+    <link>https://blog.visionloong.com/tags/benchmark/</link>
+    <description>Recent content in Benchmark on wxloong08</description>
+    <generator>Hugo</generator>
+    <language>zh-cn</language>
+    <lastBuildDate>Thu, 07 May 2026 00:00:00 +0000</lastBuildDate>
+    <atom:link href="https://blog.visionloong.com/tags/benchmark/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>url-reader Benchmark：测试方法论与初步数据</title>
+      <link>https://blog.visionloong.com/posts/2026-05-07-url-reader-benchmark/</link>
+      <pubDate>Thu, 07 May 2026 00:00:00 +0000</pubDate>
+      <guid>https://blog.visionloong.com/posts/2026-05-07-url-reader-benchmark/</guid>
+      <description>&lt;h2 id=&#34;前言&#34;&gt;前言&lt;/h2&gt;
+&lt;p&gt;上一篇博客介绍了我写的 url-reader——一个多策略网页抓取工具。文章里提到了&amp;quot;中文站成功率 ~90%&amp;ldquo;但没给具体数据。这篇补上基准测试的方法论和第一轮数据。&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

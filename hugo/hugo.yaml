@@ -1,0 +1,63 @@
+baseURL: https://blog.visionloong.com/
+locale: zh-cn
+title: wxloong08
+theme: PaperMod
+publishDir: ../docs
+enableEmoji: true
+hasCJKLanguage: true
+
+params:
+  env: production
+  description: "技术实践记录 — AI 工具链、VPS 架构、网页抓取"
+  author: wxloong08
+
+  defaultTheme: auto
+  ShowReadingTime: true
+  ShowShareButtons: false
+  ShowPostNavLinks: true
+  ShowBreadCrumbs: false
+  ShowCodeCopyButtons: true
+  ShowToc: true
+  TocOpen: false
+
+  homeInfoParams:
+    Title: wxloong08
+    Content: 技术实践记录。关注 AI 工具链、VPS 架构、网页抓取与数据处理。
+
+  socialIcons:
+    - name: github
+      url: https://github.com/wxloong08
+
+  profileMode:
+    enabled: true
+    title: wxloong08
+    subtitle: "AI 编程工具链 · VPS 架构 · 网页抓取"
+    imageUrl:
+    imageTitle:
+    buttons:
+      - name: 博客
+        url: /posts
+      - name: GitHub
+        url: https://github.com/wxloong08
+      - name: url-reader
+        url: https://github.com/wxloong08/url-reader
+
+menu:
+  main:
+    - identifier: posts
+      name: 文章
+      url: /posts/
+      weight: 10
+    - identifier: about
+      name: 关于
+      url: /about/
+      weight: 20
+    - identifier: github
+      name: GitHub
+      url: https://github.com/wxloong08
+      weight: 30
+
+markup:
+  highlight:
+    style: dracula
+    noClasses: false

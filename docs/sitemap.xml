@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+  xmlns:xhtml="http://www.w3.org/1999/xhtml">
+  <url>
+    <loc>https://blog.visionloong.com/about/</loc>
+    <lastmod>2026-05-07T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>https://blog.visionloong.com/tags/ai-toolchain/</loc>
+    <lastmod>2026-05-07T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>https://blog.visionloong.com/tags/benchmark/</loc>
+    <lastmod>2026-05-07T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>https://blog.visionloong.com/tags/engineering/</loc>
+    <lastmod>2026-05-07T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>https://blog.visionloong.com/posts/</loc>
+    <lastmod>2026-05-07T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>https://blog.visionloong.com/tags/</loc>
+    <lastmod>2026-05-07T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>https://blog.visionloong.com/posts/2026-05-07-url-reader-benchmark/</loc>
+    <lastmod>2026-05-07T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>https://blog.visionloong.com/</loc>
+    <lastmod>2026-05-07T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>https://blog.visionloong.com/posts/2026-05-07-searxng-url-reader-workflow/</loc>
+    <lastmod>2026-05-07T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>https://blog.visionloong.com/categories/</loc>
+  </url>
+</urlset>
