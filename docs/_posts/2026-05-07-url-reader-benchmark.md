@@ -1,93 +1,90 @@
 ---
 layout: post
-title: "url-reader Benchmark：跨平台网页抓取成功率与 Token 压缩率实测"
+title: "url-reader Benchmark：测试方法论与初步数据"
 date: 2026-05-07
 categories: [engineering, benchmark]
 ---
 
-## 为什么做这个基准测试
+## 前言
 
-url-reader 是一个多策略网页抓取工具，覆盖 20+ 平台，支持 4 种抓取策略的自动降级。但数据说话——本文用真实 URL 做横向对比，测量三个指标：
+上一篇博客介绍了我写的 url-reader——一个多策略网页抓取工具。文章里提到了"中文站成功率 ~90%"但没给具体数据。这篇补上基准测试的方法论和第一轮数据。
 
-1. **成功率**：不同平台下策略链能否拿到有效内容
-2. **策略命中率**：哪个策略实际完成抓取
-3. **Token 压缩率**：清洗后减少了多少无用 token
+坦白说，目前只测了 3 个 URL，样本量很小。这篇更多是分享测试方法——怎么衡量一个抓取工具的好坏——而不是给出最终结论。后续我会扩大样本量并更新数据。
 
-## 测试环境
+## 测试设计
 
-- Firecrawl API Key：已配置
-- OpenCLI：`opencli.cmd` v0.0.0
-- Jina Reader：`r.jina.ai`（免费层）
-- Playwright：Chromium headless
+一个网页抓取工具的价值可以从三个维度衡量：
 
-## 方法
+1. **成功率**：能不能拿到有效内容（不是反爬页面、不是空白）
+2. **策略效率**：哪个策略实际完成了任务（反映策略链设计是否合理）
+3. **Token 压缩率**：清洗后去掉了多少无用字符
 
-每个 URL 依次尝试平台的策略链，首个成功则停止。记录：
+每次测试记录：URL → 平台识别 → 实际命中策略 → 耗时 → 原始字符数 → 清洗后字符数。
 
-```
-平台 → 命中策略 → 原始字符数 → 清洗后字符数 → 清洗 profile
-```
-
-6 个平台 × 3 种内容类型（问答/论坛/博客）：
+## 测试 URL（第一轮）
 
 | 平台 | URL | 类型 |
 |------|-----|------|
-| 知乎 | /question/10434775822 | Q&A |
+| 知乎问答 | /question/10434775822 | 问答 |
 | Reddit | /r/ClaudeAI/comments/1qfosa6 | 论坛 |
-| SSDNodes | /blog/claude-code-pricing... | 技术博客 |
-| V2EX | /t/1035000 | 论坛 |
-| NodeSeek | /post-260001-1 | 论坛 |
-| 知乎专栏 | /p/2012957546835625895 | 文章 |
+| SSDNodes 博客 | /blog/claude-code-pricing-2026 | 技术博客 |
+
+这三个 URL 是我们在 Claude Code 实际调研中访问过的，不是专门选的 benchmark 样本——这其实更接近真实使用场景。
+
+还没测的平台：V2EX、NodeSeek、HostLoc、微信公众号——这些是下一轮要补的。
+
+## 测试环境
+
+```
+Firecrawl API Key: 已配置 (免费层 500 页/月)
+OpenCLI: opencli.cmd 0.0.0
+Jina Reader: r.jina.ai (免费)
+Playwright: Chromium headless (本轮未触发)
+操作系统: Windows 11
+网络: 国内家庭宽带 (经过代理)
+```
+
+注意这个网络环境——测试结果会受代理质量影响。如果你在海外或有更好的线路，数字可能不同。
 
 ## 结果
 
-### 成功率：5/6（83%）
+### 第一轮 (2026-05-07)
 
-| 平台 | 命中策略 | 耗时 | 字符压缩率 |
-|------|----------|------|-----------|
-| 知乎问答 | OpenCLI Browser | 11.4s | 42% |
-| Reddit | OpenCLI Browser | 13.7s | 38% |
-| SSDNodes 博客 | Firecrawl | 1.3s | 7%† |
-| V2EX | Jina Reader | 3.2s | 45% |
-| NodeSeek | Jina Reader | 2.6s | 52% |
-| 知乎专栏 | **失败** | - | - |
+| URL | 平台 | 命中策略 | 耗时 | 字符压缩 |
+|-----|------|----------|------|---------|
+| 知乎 /question/10434775822 | 知乎 | OpenCLI Browser | 11.4s | ~42%* |
+| Reddit /r/ClaudeAI/comments/1qfosa6 | Reddit | OpenCLI Browser | 13.7s | ~38%* |
+| SSDNodes /blog/claude-code-pricing | 通用 | Firecrawl | 1.3s | 7%† |
 
-† Firecrawl 返回的已是干净 Markdown，清洗空间小。Jina 和 OpenCLI 返回的含大量导航噪音，去噪效果明显。
+\* 知乎问答的数据来自清洗前后对比——原始 OpenCLI 输出包含大量导航和侧栏，清洗后只剩问答正文。
+† Firecrawl 返回的本身就是干净的 Markdown，清洗空间很小。7% 只是去掉了页脚版权声明。这不代表清洗功能没用，而是 Firecrawl 已经做了大部分去噪工作。
 
-### 策略命中分布
+### 策略命中
 
 ```
-OpenCLI Browser  ████████ 2 (知乎, Reddit)
-Jina Reader      ████████ 2 (V2EX, NodeSeek)
-Firecrawl        ████     1 (SSDNodes)
-Playwright       ░░░░     0 (未触发)
+OpenCLI Browser  ████████ 2 次 (知乎, Reddit)
+Firecrawl        ████     1 次 (SSDNodes)
+Jina Reader      无       0 次 (Reddit 被屏蔽, 知乎 451)
+Playwright       无       0 次 (未触发, 前序策略全部成功)
 ```
 
-关键发现：**没有任何单一策略能覆盖全部平台。** 这正是多策略链的价值——OpenCLI 打中国社交平台，Jina 打技术论坛，Firecrawl 打标准博客。
+Jina Reader 本轮零命中——Reddit 返回了 "You've been blocked"，知乎返回了 HTTP 451，两个都被反爬检测拦截然后降级到了 OpenCLI。这个结果和我之前的经验一致：**对中文和 Reddit 内容，Jina 基本不可用。**
 
-### Token 压缩效果
+## 解读
 
-30-50% 的字符压缩率在 LLM 上下文中意味着：
+有几个值得注意的点：
 
-| 场景 | 原始 token* | 清洗后 token* | 节省 |
-|------|------------|-------------|------|
-| 知乎问答 | ~6,000 | ~3,500 | 42% |
-| Reddit 帖子+回复 | ~4,000 | ~2,500 | 38% |
-| NodeSeek 帖子 | ~12,000 | ~5,800 | 52% |
-| V2EX 帖子 | ~5,000 | ~2,800 | 45% |
+**OpenCLI 比预期可靠。** 我最初把它作为 Playwright 之前的备选，但实际测试中它的成功率比 Jina 高得多——特别是对反爬严格的平台。代价是慢（10-15s vs Jina 的 2-3s），但对于 Claude Code 的上下文准备来说，多等 10 秒换来可靠的抓取结果，是值得的。
 
-*估算：4 字符/token
+**Firecrawl 对反爬弱站无敌。** 1.3 秒、干净 Markdown、零清洗——如果能用的起，这是最优方案。但免费额度 500 页/月，重度使用需要付费。
 
-## 为什么知乎专栏失败
+**Jina 的价值在英文技术论坛。** 虽然本轮没命中，但之前测试中 Jina 对 V2EX、LowEndTalk 这类站点的表现很好。它在策略链里的位置（第三优先级）是合理的——作为 Firecrawl 和 OpenCLI 之后的补充。
 
-Firecrawl 对知乎专栏 URL 返回了验证码页面（"环境异常，需要验证"）。这是 Firecrawl 的已知限制——对需要登录或反爬严格的中国平台，API 方式容易触发风控。此时 OpenCLI Browser 应该是后续策略，但当前知乎专栏走的是 `article_feed` 而非 `qa_answers` 清洗模式，策略链为 `Firecrawl → OpenCLI → Jina → Playwright`，理论上应该降级成功。实际测试中降级到了 OpenCLI 但清洗后内容过短被判定失败。（此问题已在 v2.0.1 修复。）
+## 接下来
 
-## 方法论反思
+1. 扩大样本量到 10+ URL（包括 V2EX、NodeSeek、微信公众号、HostLoc）
+2. 加入重复测试（同一个 URL 测试 3 次取平均，消除网络波动）
+3. 对比不同网络环境下的结果（国内直连 vs 走代理）
+4. 测一下并行抓取的性能
 
-1. **单一策略不可靠**：任何抓取方式都有盲区。Firecrawl 怕验证码，Jina 怕 Reddit/知乎，OpenCLI 对纯 JS 渲染页面有限制。
-2. **内容清洗 ≠ 压缩**：真正的价值不是把内容变短，而是把噪音去掉——让 LLM 更快地定位到关键信息。
-3. **Firecrawl 最快但最贵**：1.3s vs OpenCLI 的 10-15s。如果量大且付费，Firecrawl 最优；日常使用，OpenCLI + Jina 免费链足够。
-
-## 开源
-
-url-reader v2.0.0 开源在 [github.com/wxloong08/url-reader](https://github.com/wxloong08/url-reader)，MIT License。
+代码在 [github.com/wxloong08/url-reader](https://github.com/wxloong08/url-reader)，benchmark 脚本在 `scripts/benchmark.py`。
