@@ -13,6 +13,9 @@ class OpenCLIBrowserStrategy(FetchStrategy):
     name = "OpenCLI Browser"
 
     def fetch(self, url: str, platform: dict) -> dict:
+        if not url.startswith(("http://", "https://")):
+            return {"success": False, "error": f"不支持的 URL scheme: {url[:20]}"}
+
         opencli_cmd = _resolve_opencli_command()
         if not opencli_cmd:
             return {"success": False, "error": "opencli 未安装"}

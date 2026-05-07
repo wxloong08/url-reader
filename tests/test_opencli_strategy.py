@@ -63,5 +63,12 @@ class OpenCLIBrowserStrategyTests(unittest.TestCase):
         self.assertEqual(mock_run.call_args_list[2].args[0], ["opencli", "browser", "extract", "--tab", "TAB123"])
 
 
+    def test_fetch_rejects_non_http_url(self):
+        strategy = OpenCLIBrowserStrategy()
+        result = strategy.fetch("file:///etc/passwd", {"id": "generic", "name": "通用网站"})
+        self.assertFalse(result["success"])
+        self.assertIn("不支持", result["error"])
+
+
 if __name__ == "__main__":
     unittest.main()

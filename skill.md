@@ -84,11 +84,6 @@ python -m scripts.url_converter "https://mp.weixin.qq.com/s?__biz=xxx&mid=xxx&sn
 - 完全免费，无需 API Key
 - URL 前缀 `https://r.jina.ai/` 即可使用
 - 适合不需要登录的平台
-
-### 策略 3：Jina Reader API
-
-- 完全免费，无需 API Key
-- URL 前缀 `https://r.jina.ai/` 即可使用
 - 部分中文平台会返回 HTTP 451/503
 
 ### 策略 4：Playwright 浏览器自动化
@@ -187,26 +182,33 @@ output-dir/
 
 ```
 url-reader/
-├── skill.md                    # 本文档
+├── SKILL.md                    # 本文档
 ├── README.md                   # 人类可读概述
 ├── metadata.json               # 版本 2.0.0
 ├── config.json                 # 用户配置（gitignored）
 ├── .gitignore
-└── scripts/
+├── scripts/
+│   ├── __init__.py
+│   ├── config.py               # 配置系统
+│   ├── platforms.py            # 平台识别
+│   ├── content.py              # 标题/图片提取，平台清洗
+│   ├── formatter.py            # Markdown 输出格式化
+│   ├── saver.py                # 保存到磁盘，下载图片
+│   ├── wechat_auth.py          # WeChat 认证管理
+│   ├── url_converter.py        # WeChat URL 转换
+│   ├── benchmark.py            # 性能基准测试
+│   ├── main.py                 # 入口/编排器
+│   └── strategies/
+│       ├── __init__.py         # FetchStrategy 基类
+│       ├── firecrawl.py        # Firecrawl 策略
+│       ├── jina.py             # Jina Reader 策略
+│       ├── opencli_browser.py  # OpenCLI Browser 策略
+│       └── playwright_strategy.py  # Playwright 策略
+└── tests/
     ├── __init__.py
-    ├── config.py               # 配置系统
-    ├── platforms.py            # 平台识别
-    ├── content.py              # 标题/图片提取，文件名清理
-    ├── formatter.py            # Markdown 输出格式化
-    ├── saver.py                # 保存到磁盘，下载图片
-    ├── wechat_auth.py          # WeChat 认证管理
-    ├── url_converter.py        # WeChat URL 转换
-    ├── main.py                 # 入口/编排器
-    └── strategies/
-        ├── __init__.py         # FetchStrategy 基类
-        ├── firecrawl.py        # Firecrawl 策略
-        ├── jina.py             # Jina Reader 策略
-        └── playwright_strategy.py  # Playwright 策略
+    ├── test_content.py         # 平台识别 + 清洗测试
+    ├── test_formatter.py       # 格式化输出测试
+    └── test_opencli_strategy.py # OpenCLI 策略测试
 ```
 
 ## 依赖安装

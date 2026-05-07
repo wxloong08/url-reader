@@ -1730,6 +1730,8 @@ def _clean_v2ex_reply_body(text: str) -> str:
         if cleaned:
             lines.append(cleaned)
     return _join_paragraphs(lines)
+
+
 def _is_vanilla_forum_noise(line: str) -> bool:
     lowered = line.lower()
     if line.startswith('toggle menu') or line == '×':
