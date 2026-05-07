@@ -1,10 +1,12 @@
 {
   "name": "url-reader",
-  "version": "1.0.0",
-  "description": "智能读取任意URL内容，支持微信公众号、小红书、今日头条、抖音、淘宝、天猫、京东、百度等中国主流平台",
-  "author": "ys",
+  "version": "2.0.0",
+  "description": "智能读取任意URL内容，支持微信公众号、小红书、今日头条、抖音、淘宝、天猫、京东、百度、知乎、微博、X、B站、Reddit，以及多个技术论坛主题页",
+  "original_author": "ys (yhslgg-arch)",
+  "author": "wxloong08",
   "created": "2026-01-29",
-  "tags": ["url", "reader", "scraper", "wechat", "xiaohongshu", "toutiao", "douyin", "taobao", "jd"],
+  "updated": "2026-05-07",
+  "tags": ["url", "reader", "scraper", "wechat", "xiaohongshu", "toutiao", "douyin", "taobao", "jd", "x", "twitter", "reddit", "zhihu", "forum", "v2ex", "linuxdo", "nodeseek", "hostloc", "opencli"],
   "platforms": [
     "微信公众号",
     "小红书",
@@ -16,6 +18,15 @@
     "百度",
     "知乎",
     "微博",
-    "B站"
+    "X",
+    "B站",
+    "Reddit",
+    "MeowVPS",
+    "HostLoc",
+    "NodeSeek",
+    "LINUX DO",
+    "V2EX",
+    "LowEndTalk",
+    "LowEndSpirit"
   ]
 }

@@ -10,6 +10,13 @@ ENV/
 
 # Data
 data/
+output/
+
+# Environment & config (may contain secrets)
+.env
+.env.local
+.env.*.local
+config.json
 
 # IDE
 .idea/

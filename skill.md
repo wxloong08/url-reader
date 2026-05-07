@@ -1,226 +1,220 @@
 ---
 name: url-reader
-description: 智能读取任意URL内容，支持微信公众号、小红书、今日头条、抖音、淘宝、天猫、京东、百度等中国主流平台，自动识别平台类型并提取核心内容。自动保存内容为Markdown，下载图片到本地。
+description: 智能读取任意URL内容，支持微信公众号、小红书等中国主流平台，自动保存Markdown和图片。
 ---
 
 # URL Reader - 智能网页内容读取器
 
-一键读取任意URL的内容，自动识别平台类型，智能选择最佳读取策略，**自动保存内容和图片到本地**。
+读取任意 URL 内容，自动识别平台，智能选择读取策略，保存内容和图片到本地。
 
-## 默认保存目录
+## Claude 执行指南
 
-```
-/Users/ys/laoyang知识库/nickys/素材/
-```
+当用户请求读取 URL 时，按以下步骤执行：
 
-保存格式：
-```
-素材/
-└── 2026-01-30_文章标题/
-    ├── content.md      # Markdown内容
-    ├── img_01.webp     # 图片1
-    ├── img_02.webp     # 图片2
-    └── ...
-```
-
-## 核心技术方案
-
-### 三层读取策略（自动降级）
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                     URL Reader 技术架构                          │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                 │
-│  用户输入 URL                                                    │
-│       ↓                                                         │
-│  ┌─────────────┐                                                │
-│  │ 平台识别器   │ → 识别URL所属平台（微信/小红书/淘宝等）           │
-│  └─────────────┘                                                │
-│       ↓                                                         │
-│  ┌─────────────────────────────────────────────────────────────┐│
-│  │                    策略选择器                                ││
-│  │  ┌───────────┐  ┌───────────┐  ┌───────────┐               ││
-│  │  │ 策略1     │  │ 策略2     │  │ 策略3     │               ││
-│  │  │ Firecrawl │→│ Jina      │→│ Playwright │               ││
-│  │  │ (首选)    │  │ (备选)    │  │ (兜底)    │               ││
-│  │  └───────────┘  └───────────┘  └───────────┘               ││
-│  └─────────────────────────────────────────────────────────────┘│
-│       ↓                                                         │
-│  ┌─────────────┐                                                │
-│  │ 内容提取器   │ → 提取标题、正文、作者、时间等                   │
-│  └─────────────┘                                                │
-│       ↓                                                         │
-│  ┌─────────────┐                                                │
-│  │ 格式化输出   │ → Markdown 格式                                │
-│  └─────────────┘                                                │
-│                                                                 │
-└─────────────────────────────────────────────────────────────────┘
-```
-
-### 策略1：Firecrawl API（首选）
-
-**特点**：
-- AI 驱动的网页抓取
-- 自动处理 JavaScript 渲染
-- 自动绕过反爬机制
-- 直接返回干净的 Markdown
-- 支持 96% 的网站
-
-**API 调用**：
-```python
-from firecrawl import Firecrawl
-
-app = Firecrawl(api_key="fc-YOUR_API_KEY")
-result = app.scrape(url, formats=["markdown"])
-```
-
-**定价**：
-- 免费：500 页/月
-- 付费：按量计费
-
-### 策略2：Jina Reader API（备选）
-
-**特点**：
-- 完全免费
-- 无需 API Key
-- 支持动态渲染
-- 返回 Markdown 格式
-
-**使用方式**：
-```
-https://r.jina.ai/{原始URL}
-```
-
-### 策略3：Playwright 浏览器自动化（兜底）
-
-**特点**：
-- 支持登录态保持
-- 可处理任何网站
-- 需要首次手动登录
-
-**适用场景**：
-- 微信公众号（需要登录）
-- 需要登录的平台
-- 前两种策略都失败时
-
-## 使用方式
-
-### 方式1：直接对话
-
-```
-用户：帮我读取这个链接 https://mp.weixin.qq.com/s/xxxxx
-用户：看看这个小红书 https://www.xiaohongshu.com/explore/xxxxx
-用户：读一下这个网页 https://example.com/article
-```
-
-### 方式2：命令行调用
+### 1. 读取并显示
 
 ```bash
-/url-reader https://example.com/article
+cd D:\skills\url-reader
+python -m scripts.main <url>
 ```
+
+### 2. 读取并保存到默认目录
+
+```bash
+python -m scripts.main <url> --save
+```
+
+### 3. 读取并保存到指定目录
+
+```bash
+URL_READER_OUTPUT_DIR="D:\custom\path" python -m scripts.main <url> --save
+```
+
+### 4. WeChat 认证管理
+
+```bash
+# 首次登录（打开浏览器扫码）
+python -m scripts.wechat_auth setup
+
+# 检查认证状态
+python -m scripts.wechat_auth status
+```
+
+### 5. WeChat 长链接转短链接
+
+```bash
+python -m scripts.url_converter "https://mp.weixin.qq.com/s?__biz=xxx&mid=xxx&sn=xxx"
+```
+
+## 多层读取策略（自动降级）
+
+```
+用户输入 URL
+     ↓
+┌─────────────┐
+│ 平台识别器   │ → 识别 URL 所属平台
+└─────────────┘
+     ↓
+┌─────────────────────────────────────┐
+│           策略链                     │
+│  Firecrawl → OpenCLI → Jina → Playwright │
+│  自动跳过不可用策略，按平台优先级尝试    │
+└─────────────────────────────────────┘
+     ↓
+┌─────────────┐
+│ 格式化 + 保存│ → Markdown + 图片下载
+└─────────────┘
+```
+
+### 策略 1：Firecrawl API
+
+- AI 驱动的网页抓取，直接返回 Markdown
+- 需要在 `.env` 或环境变量中设置 `FIRECRAWL_API_KEY`
+- 免费额度：500 页/月
+- 未配置 API Key 或未安装 `firecrawl-py` 时自动跳过
+
+### 策略 2：OpenCLI Browser Extract
+
+- 复用本机 `opencli browser extract` 的渲染与正文提取
+- 中文站兼容性最好（Jina 常返回 451/503 的平台都能用）
+- **2026-05-07 升级为全平台通用中层策略**，不再仅限知乎/Reddit
+
+### 策略 3：Jina Reader API
+
+- 完全免费，无需 API Key
+- URL 前缀 `https://r.jina.ai/` 即可使用
+- 适合不需要登录的平台
+
+### 策略 3：Jina Reader API
+
+- 完全免费，无需 API Key
+- URL 前缀 `https://r.jina.ai/` 即可使用
+- 部分中文平台会返回 HTTP 451/503
+
+### 策略 4：Playwright 浏览器自动化
+
+- 支持登录态保持（WeChat 等）
+- 移动端 User-Agent 模拟
+- 需要首次手动登录
 
 ## 支持的平台
 
-| 平台 | 域名 | 推荐策略 | 备注 |
-|------|------|----------|------|
-| 微信公众号 | mp.weixin.qq.com | Firecrawl → Playwright | 可能需要登录 |
-| 小红书 | xiaohongshu.com | Firecrawl → Jina | 短链接需解析 |
-| 今日头条 | toutiao.com | Firecrawl → Jina | - |
-| 抖音 | douyin.com | Firecrawl | 提取视频描述 |
-| 淘宝 | taobao.com | Firecrawl → Playwright | 可能需要登录 |
-| 天猫 | tmall.com | Firecrawl → Playwright | 可能需要登录 |
-| 京东 | jd.com | Firecrawl → Jina | - |
-| 百度 | baidu.com | Firecrawl → Jina | - |
-| 知乎 | zhihu.com | Firecrawl → Jina | - |
-| 微博 | weibo.com | Firecrawl → Playwright | 可能需要登录 |
-| B站 | bilibili.com | Firecrawl → Jina | - |
-| 通用网站 | * | Firecrawl → Jina | - |
+| 平台 | 域名 | 策略优先级 |
+|------|------|-----------|
+| 微信公众号 | mp.weixin.qq.com | Firecrawl → OpenCLI → Playwright → Jina |
+| 小红书 | xiaohongshu.com | Firecrawl → OpenCLI → Jina → Playwright |
+| 今日头条 | toutiao.com | Firecrawl → OpenCLI → Jina → Playwright |
+| 抖音 | douyin.com | Firecrawl → OpenCLI → Jina → Playwright |
+| 淘宝 | taobao.com | Firecrawl → OpenCLI → Playwright → Jina |
+| 天猫 | tmall.com | Firecrawl → OpenCLI → Playwright → Jina |
+| 京东 | jd.com | Firecrawl → OpenCLI → Jina → Playwright |
+| 百度 | baidu.com | Firecrawl → OpenCLI → Jina → Playwright |
+| 知乎 | zhihu.com | Firecrawl → OpenCLI → Jina → Playwright |
+| 微博 | weibo.com | Firecrawl → OpenCLI → Playwright → Jina |
+| X | x.com / twitter.com | Jina → OpenCLI → Playwright → Firecrawl |
+| B站 | bilibili.com | Firecrawl → OpenCLI → Jina → Playwright |
+| Reddit | reddit.com | Jina → OpenCLI → Playwright |
+| V2EX | v2ex.com | Jina → OpenCLI → Playwright |
+| MeowVPS | meowvps.com | Jina → OpenCLI → Playwright |
+| HostLoc | hostloc.com | Jina → OpenCLI → Playwright |
+| NodeSeek | nodeseek.com | Jina → OpenCLI → Playwright |
+| LINUX DO | linux.do | Jina → OpenCLI → Playwright |
+| LowEndTalk/Spirit | lowendtalk.com | Jina → OpenCLI → Playwright |
+| 通用网站 | * | Firecrawl → OpenCLI → Jina → Playwright |
 
-## 工作流程
+## 论坛帖子页支持
 
-```
-1. 接收 URL
-2. 识别平台类型
-3. 选择读取策略：
-   ├─ 尝试 Firecrawl API
-   │   ├─ 成功 → 返回内容
-   │   └─ 失败 → 继续
-   ├─ 尝试 Jina Reader
-   │   ├─ 成功 → 返回内容
-   │   └─ 失败 → 继续
-   └─ 尝试 Playwright（需要登录态）
-       ├─ 有登录态 → 读取内容
-       └─ 无登录态 → 提示用户设置
-4. 提取核心内容
-5. 格式化输出
-```
+针对 `HostLoc`、`NodeSeek`、`LINUX DO`、`V2EX`、`LowEndTalk`、`LowEndSpirit` 的帖子详情页，系统会自动进入论坛帖子清洗模式：
 
-## 输出格式
+- 优先保留主楼正文和回复内容
+- 自动清理导航、版块列表、广告、登录提示、贴纸图片等噪音
+- 自动过滤 `BD`、`支持`、`前排`、`ID + 谢谢老板` 这类低信息回复
+- 对 `LowEndTalk` 这类可能返回 `Sign In` 页的场景，若未拿到公开帖子正文则直接判定失败，不把登录页误当内容返回
 
-```markdown
-# [文章标题]
+## 问答页支持
 
-**来源**：[平台名称]
-**作者**：[作者名称]
-**发布时间**：[时间]
-**原文链接**：[URL]
+针对 `知乎 question` 页，系统会自动进入答案清洗模式：
 
----
+- 只保留问题标题和当前已加载的公开回答
+- 自动移除关注/浏览统计、热榜、客户端下载提示、侧栏推荐等噪音
+- 优先使用 `OpenCLI Browser Extract` 作为 `Jina` 之后的兜底路径
 
-[正文内容]
+## 配置
 
----
+### .env 文件（推荐）
 
-**互动数据**（如有）：
-- 阅读/播放：xxx
-- 点赞：xxx
-- 评论：xxx
-```
-
-## 配置说明
-
-### Firecrawl API Key 配置
-
-1. 访问 https://www.firecrawl.dev/ 注册账号
-2. 获取 API Key
-3. 配置环境变量：
-   ```bash
-   export FIRECRAWL_API_KEY="fc-YOUR_API_KEY"
-   ```
-
-### Playwright 登录态设置（可选）
-
-用于需要登录的平台（如微信公众号）：
+在项目根目录创建 `.env` 文件（已 gitignored）：
 
 ```bash
-cd ~/.claude/skills/url-reader
-source .venv/bin/activate
-python scripts/wechat_reader.py setup
+FIRECRAWL_API_KEY=fc-YOUR_KEY
+```
+
+### 环境变量（最高优先级）
+
+| 变量 | 说明 | 默认值 |
+|------|------|--------|
+| `FIRECRAWL_API_KEY` | Firecrawl API 密钥 | (空) |
+| `URL_READER_OUTPUT_DIR` | 保存目录 | `~/url-reader-output` |
+| `URL_READER_TIMEOUT` | HTTP 超时秒数 | 30 |
+| `URL_READER_HEADLESS` | Playwright 无头模式 | true |
+| `URL_READER_FORUM_MAX_PAGES` | 论坛帖子最多抓取页数 | 8 |
+
+### config.json（次优先级）
+
+在项目根目录创建 `config.json`（已 gitignored）：
+
+```json
+{
+  "firecrawl_api_key": "fc-YOUR_KEY",
+  "output_dir": "D:/custom/path",
+  "timeout": 60,
+  "forum_max_pages": 8
+}
+```
+
+## 保存格式
+
+```
+output-dir/
+└── 2026-01-30_文章标题/
+    ├── content.md      # Markdown 内容（含 YAML front matter）
+    ├── img_01.webp
+    ├── img_02.jpg
+    └── ...
 ```
 
 ## 目录结构
 
 ```
 url-reader/
-├── skill.md              # 本文档
-├── metadata.json         # 元数据
-├── scripts/
-│   ├── url_reader.py     # 主读取器（整合三种策略）
-│   ├── firecrawl_reader.py   # Firecrawl 策略
-│   ├── jina_reader.py        # Jina 策略
-│   ├── wechat_reader.py      # Playwright 策略（微信）
-│   └── url_identifier.py     # URL 平台识别器
-└── data/
-    └── wechat_auth.json  # 微信登录态（自动生成）
+├── skill.md                    # 本文档
+├── README.md                   # 人类可读概述
+├── metadata.json               # 版本 2.0.0
+├── config.json                 # 用户配置（gitignored）
+├── .gitignore
+└── scripts/
+    ├── __init__.py
+    ├── config.py               # 配置系统
+    ├── platforms.py            # 平台识别
+    ├── content.py              # 标题/图片提取，文件名清理
+    ├── formatter.py            # Markdown 输出格式化
+    ├── saver.py                # 保存到磁盘，下载图片
+    ├── wechat_auth.py          # WeChat 认证管理
+    ├── url_converter.py        # WeChat URL 转换
+    ├── main.py                 # 入口/编排器
+    └── strategies/
+        ├── __init__.py         # FetchStrategy 基类
+        ├── firecrawl.py        # Firecrawl 策略
+        ├── jina.py             # Jina Reader 策略
+        └── playwright_strategy.py  # Playwright 策略
 ```
 
 ## 依赖安装
 
 ```bash
-cd ~/.claude/skills/url-reader
-python3 -m venv .venv
-source .venv/bin/activate
+cd D:\skills\url-reader
+python -m venv .venv
+.venv\Scripts\activate
 
 # 核心依赖
 pip install firecrawl-py requests
@@ -232,27 +226,11 @@ playwright install chromium
 
 ## 常见问题
 
-### Q: 为什么有些网站读取失败？
+**Q: 微信公众号读取失败？**
+A: 微信反爬最严格。运行 `python -m scripts.wechat_auth setup` 设置登录态，或切换到 Firecrawl。
 
-A: 可能原因：
-1. 网站有强反爬机制 → 尝试 Playwright
-2. 需要登录 → 设置登录态
-3. 内容已删除 → 无法读取
+**Q: Firecrawl 额度用完？**
+A: 自动降级到 Jina Reader（免费），无需操作。
 
-### Q: Firecrawl 免费额度用完了怎么办？
-
-A:
-1. 自动降级到 Jina Reader（免费）
-2. 或升级 Firecrawl 付费计划
-
-### Q: 微信公众号总是读取失败？
-
-A: 微信反爬最严格，建议：
-1. 使用 Playwright + 登录态
-2. 或手动复制内容
-
-## 版本历史
-
-- **v2.0**：整合 Firecrawl + Jina + Playwright 三层策略
-- **v1.1**：添加 Playwright 浏览器自动化
-- **v1.0**：基础功能
+**Q: 图片下载失败？**
+A: 部分平台有 Referer 验证。系统已内置平台感知的 Referer 映射，覆盖小红书、微信、飞书、微博、B站。

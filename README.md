@@ -1,110 +1,79 @@
 # URL Reader - 智能网页内容读取器
 
-一键读取任意URL的内容，自动识别平台类型，智能选择最佳读取策略，自动保存内容和图片到本地。
+> Forked from [yhslgg-arch/url-reader](https://github.com/yhslgg-arch/url-reader)，在此基础上做了大量扩展。
+
+读取任意 URL 内容，自动识别平台类型，智能选择最佳读取策略，自动保存内容和图片到本地。
 
 ## 功能特点
 
-- 🔍 **智能平台识别**：自动识别微信公众号、小红书、今日头条、抖音、淘宝、天猫、京东、百度、知乎、微博、B站等平台
-- 🔄 **三层读取策略**：Firecrawl → Jina → Playwright 自动降级
-- 📝 **Markdown输出**：干净的Markdown格式输出
-- 💾 **自动保存**：自动保存内容和图片到本地
+- **智能平台识别**：微信公众号、小红书、今日头条、抖音、淘宝、天猫、京东、百度、知乎、微博、X、B站、Reddit、MeowVPS、HostLoc、NodeSeek、LINUX DO、V2EX、LowEndTalk、LowEndSpirit
+- **多策略读取**：Firecrawl → OpenCLI → Jina → Playwright，按平台自动选择优先级。未配置 API Key 或未安装依赖时自动跳过不可用策略
+- **Markdown 输出**：干净的 Markdown 格式，含 YAML front matter
+- **自动保存**：内容 + 图片下载到本地，图片 URL 自动替换为本地路径
+- **平台感知**：图片下载自动匹配正确的 Referer
 
-## 技术架构
-
-```
-用户输入 URL
-     ↓
-┌─────────────┐
-│ 平台识别器   │ → 识别URL所属平台
-└─────────────┘
-     ↓
-┌─────────────────────────────────────┐
-│           策略选择器                 │
-│  Firecrawl → Jina → Playwright      │
-│  (首选)     (备选)   (兜底)          │
-└─────────────────────────────────────┘
-     ↓
-┌─────────────┐
-│ 内容提取器   │ → 提取标题、正文、作者等
-└─────────────┘
-     ↓
-┌─────────────┐
-│ 格式化输出   │ → Markdown 格式
-└─────────────┘
-```
-
-## 安装
+## 快速开始
 
 ```bash
-cd ~/.claude/skills/url-reader
-python3 -m venv .venv
-source .venv/bin/activate
-
-# 核心依赖
+# 安装依赖
 pip install firecrawl-py requests
 
-# Playwright（可选，用于需要登录的平台）
-pip install playwright
-playwright install chromium
+# 可选：Playwright（用于需要登录的平台）
+pip install playwright && playwright install chromium
+
+# 读取 URL
+python -m scripts.main https://example.com
+
+# 读取并保存
+python -m scripts.main https://example.com --save
 ```
 
 ## 配置
 
-### Firecrawl API Key
-
-1. 访问 https://www.firecrawl.dev/ 注册账号
-2. 获取 API Key
-3. 配置环境变量：
-   ```bash
-   export FIRECRAWL_API_KEY="fc-YOUR_API_KEY"
-   ```
-
-## 使用方式
-
-### Claude Code 中使用
-
-```
-用户：帮我读取这个链接 https://mp.weixin.qq.com/s/xxxxx
-用户：看看这个小红书 https://www.xiaohongshu.com/explore/xxxxx
-```
-
-### 命令行调用
+优先在项目根目录创建 `.env` 文件（已 gitignored）：
 
 ```bash
-/url-reader https://example.com/article
+FIRECRAWL_API_KEY=fc-YOUR_KEY
 ```
 
-## 支持的平台
+也支持通过环境变量或 `config.json` 配置：
 
-| 平台 | 域名 | 推荐策略 |
-|------|------|----------|
-| 微信公众号 | mp.weixin.qq.com | Firecrawl → Playwright |
-| 小红书 | xiaohongshu.com | Firecrawl → Jina |
-| 今日头条 | toutiao.com | Firecrawl → Jina |
-| 抖音 | douyin.com | Firecrawl |
-| 淘宝 | taobao.com | Firecrawl → Playwright |
-| 天猫 | tmall.com | Firecrawl → Playwright |
-| 京东 | jd.com | Firecrawl → Jina |
-| 百度 | baidu.com | Firecrawl → Jina |
-| 知乎 | zhihu.com | Firecrawl → Jina |
-| 微博 | weibo.com | Firecrawl → Playwright |
-| B站 | bilibili.com | Firecrawl → Jina |
-| 通用网站 | * | Firecrawl → Jina |
+| 环境变量 | 说明 | 默认值 |
+|---------|------|--------|
+| `FIRECRAWL_API_KEY` | Firecrawl API 密钥 | (空) |
+| `URL_READER_OUTPUT_DIR` | 保存目录 | `~/url-reader-output` |
+| `URL_READER_TIMEOUT` | HTTP 超时秒数 | 30 |
+| `URL_READER_HEADLESS` | Playwright 无头模式 | true |
 
-## 目录结构
+## 架构
+
+```
+URL 输入 → 平台识别 → 策略链（按平台优先级）→ 格式化 → 保存
+```
+
+### 目录结构
 
 ```
 url-reader/
-├── skill.md              # Skill文档
-├── metadata.json         # 元数据
-├── scripts/
-│   ├── url_reader.py     # 主读取器
-│   ├── url_identifier.py # URL平台识别器
-│   ├── save_content.py   # 内容保存
-│   └── wechat_reader.py  # 微信读取器
-└── data/                 # 数据目录（不上传）
+├── skill.md                        # Claude 执行指南
+├── README.md
+├── metadata.json
+└── scripts/
+    ├── config.py                   # 配置（env > .env > config.json > defaults）
+    ├── platforms.py                # 平台识别 + 策略优先级
+    ├── content.py                  # 标题/图片提取
+    ├── formatter.py                # Markdown 格式化
+    ├── saver.py                    # 磁盘保存 + 图片下载
+    ├── wechat_auth.py              # WeChat 认证管理
+    ├── url_converter.py            # WeChat URL 转换
+    ├── main.py                     # 入口 / 编排器
+    └── strategies/
+        ├── __init__.py             # FetchStrategy ABC
+        ├── firecrawl.py
+        ├── jina.py
+        └── playwright_strategy.py
 ```
 
 ## License
 
-MIT
+MIT — 原始版本 © ys (yhslgg-arch)，修改和扩展 © wxloong08。详见 [LICENSE](LICENSE)。
