@@ -6,25 +6,33 @@ publishDir: ../docs
 hasCJKLanguage: true
 enableEmoji: true
 
+pagination:
+  pagerSize: 5
+
+permalinks:
+  posts: /p/:slug/
+  page: /:slug/
+
 params:
   mainSections:
     - posts
-  featuredImageField: image
   rssFullContent: true
   favicon: /favicon.svg
 
-  dateFormat:
-    published: 2006-01-02
-    lastUpdated: 2006-01-02 15:04
+  footer:
+    since: 2026
 
   sidebar:
     emoji: ⚡
-    subtitle: AI 编程工具链 · VPS 架构 · 网页抓取
+    subtitle: AI 工具链 · VPS 架构 · 网页抓取
 
   article:
     math: false
     toc: true
     readingTime: true
+    license:
+      enabled: true
+      default: "Licensed under [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/)"
 
   comments:
     enabled: false
@@ -34,7 +42,7 @@ params:
       - type: search
       - type: archives
         params:
-          limit: 10
+          limit: 5
       - type: tag-cloud
         params:
           limit: 10
@@ -43,14 +51,7 @@ params:
 
   opengraph:
     twitter:
-      site:
       card: summary_large_image
-
-  defaultImage:
-    opengraph:
-      enabled: false
-      local: false
-      src:
 
   colorScheme:
     toggle: true
@@ -58,31 +59,29 @@ params:
 
 menu:
   main:
-    - identifier: home
-      name: 首页
-      url: /
-      weight: 1
     - identifier: posts
       name: 文章
       url: /posts/
+      weight: 1
+    - identifier: archives
+      name: 归档
+      url: /archives/
       weight: 2
+    - identifier: search
+      name: 搜索
+      url: /search/
+      weight: 3
     - identifier: about
       name: 关于
       url: /about/
-      weight: 3
-    - identifier: github
-      name: GitHub
-      url: https://github.com/wxloong08
       weight: 4
-      params:
-        newTab: true
 
   social:
     - identifier: github
       name: GitHub
       url: https://github.com/wxloong08
       params:
-        icon: link
+        icon: brand-github
 
 related:
   includeNewer: true
@@ -90,8 +89,6 @@ related:
   toLower: false
   indices:
     - name: tags
-      weight: 100
-    - name: categories
       weight: 100
 
 markup:
