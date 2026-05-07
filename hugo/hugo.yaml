@@ -25,6 +25,10 @@ params:
   sidebar:
     emoji: ⚡
     subtitle: AI 工具链 · VPS 架构 · 网页抓取
+    avatar:
+      src: img/avatar.png
+      srcset: ""
+      alt: wxloong08
 
   article:
     math: false
