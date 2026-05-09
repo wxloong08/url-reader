@@ -68,7 +68,12 @@ def read_url(url: str, verbose: bool = True) -> dict:
         result = strategy.fetch(url, platform)
 
         if result.get('success'):
-            processed = postprocess_content(result.get('content', ''), url, platform)
+            content_for_postprocess = _prepare_content_for_postprocess(
+                result.get('content', ''),
+                result.get('metadata', {}),
+                url,
+            )
+            processed = postprocess_content(content_for_postprocess, url, platform)
             if not processed.get('success'):
                 errors.append(f"{strategy.name}: {processed.get('error')}")
                 if verbose:
@@ -95,6 +100,27 @@ def read_url(url: str, verbose: bool = True) -> dict:
         'platform': platform,
         'errors': errors,
     }
+
+
+def _prepare_content_for_postprocess(content: str, metadata: dict, url: str) -> str:
+    """Normalize non-Jina strategy output into the metadata envelope postprocess_content expects."""
+    if 'Markdown Content:' in content:
+        return content
+
+    title = str(metadata.get('title', '')).strip()
+    source_url = str(metadata.get('source_url', url)).strip() or url
+    published = str(metadata.get('published_time') or metadata.get('publishTime') or '').strip()
+
+    parts = []
+    if title:
+        parts.append(f'Title: {title}')
+    if source_url:
+        parts.append(f'URL Source: {source_url}')
+    if published:
+        parts.append(f'Published Time: {published}')
+    parts.append('Markdown Content:')
+    parts.append(content)
+    return '\n\n'.join(parts)
 
 
 def _extend_forum_replies(result: dict, url: str, platform: dict, strategy, verbose: bool = True) -> dict:

@@ -105,10 +105,21 @@ python -m scripts.url_converter "https://mp.weixin.qq.com/s?__biz=xxx&mid=xxx&sn
 | 京东 | jd.com | Firecrawl → OpenCLI → Jina → Playwright |
 | 百度 | baidu.com | Firecrawl → OpenCLI → Jina → Playwright |
 | 知乎 | zhihu.com | Firecrawl → OpenCLI → Jina → Playwright |
+| 脉脉 | maimai.cn | Firecrawl → OpenCLI → Jina → Playwright |
+| 牛客 | nowcoder.com | Firecrawl → OpenCLI → Jina → Playwright |
 | 微博 | weibo.com | Firecrawl → OpenCLI → Playwright → Jina |
 | X | x.com / twitter.com | Jina → OpenCLI → Playwright → Firecrawl |
 | B站 | bilibili.com | Firecrawl → OpenCLI → Jina → Playwright |
 | Reddit | reddit.com | Jina → OpenCLI → Playwright |
+| 巨潮资讯 | cninfo.com.cn | Jina → OpenCLI → Playwright |
+| 上交所 | sse.com.cn / star.sse.com.cn | Jina → OpenCLI → Playwright |
+| HKEXnews | hkexnews.hk | Jina → OpenCLI → Playwright |
+| SEC EDGAR | sec.gov | Jina → OpenCLI → Playwright |
+| Reuters | reuters.com | OpenCLI → Jina → Playwright → Firecrawl |
+| 财联社 | cls.cn | Jina → OpenCLI → Playwright |
+| 东方财富 | finance.eastmoney.com | Jina → OpenCLI → Playwright |
+| 新浪财经 | finance.sina.com.cn | Jina → OpenCLI → Playwright |
+| 华尔街见闻 | wallstreetcn.com | Jina → OpenCLI → Playwright |
 | V2EX | v2ex.com | Jina → OpenCLI → Playwright |
 | MeowVPS | meowvps.com | Jina → OpenCLI → Playwright |
 | HostLoc | hostloc.com | Jina → OpenCLI → Playwright |
@@ -133,6 +144,31 @@ python -m scripts.url_converter "https://mp.weixin.qq.com/s?__biz=xxx&mid=xxx&sn
 - 只保留问题标题和当前已加载的公开回答
 - 自动移除关注/浏览统计、热榜、客户端下载提示、侧栏推荐等噪音
 - 优先使用 `OpenCLI Browser Extract` 作为 `Jina` 之后的兜底路径
+
+## 求职 / 面经支持
+
+针对求职调研场景，系统已支持专门清洗：
+
+- `脉脉 article/detail`：保留标题、作者、发布时间/身份、正文
+- `牛客 discuss`：保留标题和主帖正文，帖内小节整理为二级标题
+
+这类清洗会尽量去掉登录提示、加好友控件、标签、分享控件、热门话题、评论区和 APP 打开引导，只留下适合 LLM 调研的主体内容。
+
+## 财经 / 新闻支持
+
+针对财经披露源和新闻源，系统已支持专门清洗：
+
+- `巨潮资讯`：公告 PDF、最新公告列表
+- `上交所`：公告 PDF、科创板公告列表
+- `HKEXnews`：标题搜索结果页、披露 PDF
+- `SEC EDGAR`：公司 filings 列表页、filing index 页
+- `Reuters`：Markets 列表页、文章页
+- `财联社`：首页资讯流、detail 文章页
+- `东方财富`：财经首页资讯流、文章页
+- `新浪财经`：首页资讯流、文章页
+- `华尔街见闻`：首页资讯流、文章页
+
+这些清洗会尽量保留投资调研所需的元信息，如标题、时间、来源、证券代码、公告编号、文档类型和正文，并去掉导航、行情挂件、评论区、推荐阅读、下载/登录引导等噪音。
 
 ## 配置
 

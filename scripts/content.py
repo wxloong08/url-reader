@@ -382,6 +382,39 @@ def postprocess_content(content: str, url: str, platform: dict) -> dict:
     metadata = _extract_jina_metadata(content)
     markdown = metadata.get('markdown', content).strip()
 
+    if _is_eastmoney_platform(platform, url):
+        return _extract_eastmoney_content(markdown, metadata, url)
+
+    if _is_sinafinance_platform(platform, url):
+        return _extract_sinafinance_content(markdown, metadata, url)
+
+    if _is_wallstreetcn_platform(platform, url):
+        return _extract_wallstreetcn_content(markdown, metadata, url)
+
+    if _is_maimai_platform(platform, url):
+        return _extract_maimai_content(markdown, metadata, url)
+
+    if _is_nowcoder_platform(platform, url):
+        return _extract_nowcoder_content(markdown, metadata, url)
+
+    if _is_cls_platform(platform, url):
+        return _extract_cls_content(markdown, metadata, url)
+
+    if _is_sec_platform(platform, url):
+        return _extract_sec_content(markdown, metadata, url)
+
+    if _is_hkexnews_platform(platform, url):
+        return _extract_hkexnews_content(markdown, metadata, url)
+
+    if _is_reuters_platform(platform, url):
+        return _extract_reuters_content(markdown, metadata, url)
+
+    if _is_sse_platform(platform, url):
+        return _extract_sse_content(markdown, metadata, url)
+
+    if _is_cninfo_platform(platform, url):
+        return _extract_cninfo_content(markdown, metadata, url)
+
     if _is_zhihu_question_page(platform, url):
         return _extract_zhihu_question_answers(markdown, metadata)
 
@@ -461,6 +494,73 @@ def _is_zhihu_question_page(platform: dict, url: str) -> bool:
     return '/question/' in urlparse(url).path.lower()
 
 
+def _is_cninfo_platform(platform: dict, url: str) -> bool:
+    if platform.get('id') == 'cninfo':
+        return True
+    return 'cninfo.com.cn' in urlparse(url).netloc.lower()
+
+
+def _is_sse_platform(platform: dict, url: str) -> bool:
+    if platform.get('id') == 'sse':
+        return True
+    return 'sse.com.cn' in urlparse(url).netloc.lower()
+
+
+def _is_reuters_platform(platform: dict, url: str) -> bool:
+    if platform.get('id') == 'reuters':
+        return True
+    return 'reuters.com' in urlparse(url).netloc.lower()
+
+
+def _is_hkexnews_platform(platform: dict, url: str) -> bool:
+    if platform.get('id') == 'hkexnews':
+        return True
+    return 'hkexnews.hk' in urlparse(url).netloc.lower()
+
+
+def _is_sec_platform(platform: dict, url: str) -> bool:
+    if platform.get('id') == 'sec':
+        return True
+    return 'sec.gov' in urlparse(url).netloc.lower()
+
+
+def _is_cls_platform(platform: dict, url: str) -> bool:
+    if platform.get('id') == 'cls':
+        return True
+    return 'cls.cn' in urlparse(url).netloc.lower()
+
+
+def _is_maimai_platform(platform: dict, url: str) -> bool:
+    if platform.get('id') == 'maimai':
+        return True
+    return 'maimai.cn' in urlparse(url).netloc.lower()
+
+
+def _is_nowcoder_platform(platform: dict, url: str) -> bool:
+    if platform.get('id') == 'nowcoder':
+        return True
+    return 'nowcoder.com' in urlparse(url).netloc.lower()
+
+
+def _is_eastmoney_platform(platform: dict, url: str) -> bool:
+    if platform.get('id') == 'eastmoney':
+        return True
+    domain = urlparse(url).netloc.lower()
+    return 'eastmoney.com' in domain
+
+
+def _is_sinafinance_platform(platform: dict, url: str) -> bool:
+    if platform.get('id') == 'sinafinance':
+        return True
+    return 'finance.sina.com.cn' in urlparse(url).netloc.lower()
+
+
+def _is_wallstreetcn_platform(platform: dict, url: str) -> bool:
+    if platform.get('id') == 'wallstreetcn':
+        return True
+    return 'wallstreetcn.com' in urlparse(url).netloc.lower()
+
+
 def _extract_jina_metadata(content: str) -> dict:
     metadata: dict[str, str] = {}
 
@@ -475,6 +575,10 @@ def _extract_jina_metadata(content: str) -> dict:
     published_match = re.search(r'^Published Time:\s*(.+)$', content, re.MULTILINE)
     if published_match:
         metadata['published_time'] = published_match.group(1).strip()
+
+    pages_match = re.search(r'^Number of Pages:\s*(\d+)$', content, re.MULTILINE)
+    if pages_match:
+        metadata['page_count'] = pages_match.group(1).strip()
 
     if 'Markdown Content:' in content:
         metadata['markdown'] = content.split('Markdown Content:', 1)[1].strip()
@@ -1258,6 +1362,146 @@ def _extract_zhihu_question_answers(markdown: str, metadata: dict) -> dict:
     }
 
 
+def _extract_cninfo_content(markdown: str, metadata: dict, url: str) -> dict:
+    if _is_cninfo_notice_list(url, markdown):
+        return _extract_cninfo_notice_list(markdown, metadata)
+    if _is_cninfo_announcement_document(url, markdown):
+        return _extract_cninfo_announcement(markdown, metadata)
+
+    cleaned, cleanup_stats = _apply_platform_cleanup(markdown, {'cleanup_profile': 'generic'})
+    title = _pick_title(cleaned, metadata)
+    return {
+        'success': True,
+        'content': cleaned,
+        'metadata': {
+            **metadata,
+            **cleanup_stats,
+            'title': title,
+        },
+    }
+
+
+def _extract_sse_content(markdown: str, metadata: dict, url: str) -> dict:
+    if _is_sse_notice_list(url, markdown):
+        return _extract_sse_notice_list(markdown, metadata)
+    if _is_sse_announcement_document(url, markdown):
+        return _extract_sse_announcement(markdown, metadata)
+
+    cleaned, cleanup_stats = _apply_platform_cleanup(markdown, {'cleanup_profile': 'generic'})
+    title = _pick_title(cleaned, metadata)
+    return {
+        'success': True,
+        'content': cleaned,
+        'metadata': {
+            **metadata,
+            **cleanup_stats,
+            'title': title,
+        },
+    }
+
+
+def _extract_reuters_content(markdown: str, metadata: dict, url: str) -> dict:
+    if _is_reuters_markets_page(url, markdown):
+        return _extract_reuters_markets_page(markdown, metadata)
+    return _extract_reuters_article(markdown, metadata)
+
+
+def _extract_hkexnews_content(markdown: str, metadata: dict, url: str) -> dict:
+    if _is_hkexnews_title_search_page(url, markdown):
+        return _extract_hkexnews_title_search(markdown, metadata)
+    if _is_hkexnews_announcement_document(url, markdown):
+        return _extract_hkexnews_announcement(markdown, metadata)
+
+    cleaned, cleanup_stats = _apply_platform_cleanup(markdown, {'cleanup_profile': 'generic'})
+    title = _pick_title(cleaned, metadata)
+    return {
+        'success': True,
+        'content': cleaned,
+        'metadata': {
+            **metadata,
+            **cleanup_stats,
+            'title': title,
+        },
+    }
+
+
+def _extract_sec_content(markdown: str, metadata: dict, url: str) -> dict:
+    if _is_sec_browse_page(url, markdown):
+        return _extract_sec_browse_page(markdown, metadata)
+    if _is_sec_filing_index_page(url, markdown):
+        return _extract_sec_filing_index_page(markdown, metadata, url)
+
+    cleaned, cleanup_stats = _apply_platform_cleanup(markdown, {'cleanup_profile': 'generic'})
+    title = _pick_title(cleaned, metadata)
+    return {
+        'success': True,
+        'content': cleaned,
+        'metadata': {
+            **metadata,
+            **cleanup_stats,
+            'title': title,
+        },
+    }
+
+
+def _extract_cls_content(markdown: str, metadata: dict, url: str) -> dict:
+    if _is_cls_detail_page(url, markdown):
+        return _extract_cls_detail_page(markdown, metadata)
+    return _extract_cls_home_page(markdown, metadata)
+
+
+def _extract_eastmoney_content(markdown: str, metadata: dict, url: str) -> dict:
+    if _is_eastmoney_article_page(url, markdown):
+        return _extract_eastmoney_article_page(markdown, metadata)
+    return _extract_eastmoney_home_page(markdown, metadata)
+
+
+def _extract_sinafinance_content(markdown: str, metadata: dict, url: str) -> dict:
+    if _is_sinafinance_article_page(url, markdown):
+        return _extract_sinafinance_article_page(markdown, metadata)
+    return _extract_sinafinance_home_page(markdown, metadata)
+
+
+def _extract_wallstreetcn_content(markdown: str, metadata: dict, url: str) -> dict:
+    if _is_wallstreetcn_article_page(url, markdown):
+        return _extract_wallstreetcn_article_page(markdown, metadata)
+    return _extract_wallstreetcn_home_page(markdown, metadata)
+
+
+def _extract_maimai_content(markdown: str, metadata: dict, url: str) -> dict:
+    if _is_maimai_article_page(url, markdown):
+        return _extract_maimai_article_page(markdown, metadata)
+
+    cleaned, cleanup_stats = _apply_platform_cleanup(markdown, {'cleanup_profile': 'generic'})
+    title = _pick_title(cleaned, metadata)
+    return {
+        'success': True,
+        'content': cleaned,
+        'metadata': {
+            **metadata,
+            **cleanup_stats,
+            'title': title,
+        },
+    }
+
+
+def _extract_nowcoder_content(markdown: str, metadata: dict, url: str) -> dict:
+    if _is_nowcoder_discuss_page(url, markdown):
+        return _extract_nowcoder_discuss_page(markdown, metadata)
+
+    cleaned, cleanup_stats = _apply_platform_cleanup(markdown, {'cleanup_profile': 'generic'})
+    title = _pick_title(cleaned, metadata)
+    return {
+        'success': True,
+        'content': cleaned,
+        'metadata': {
+            **metadata,
+            **cleanup_stats,
+            'title': title,
+        },
+    }
+
+
 def _pick_x_title(markdown: str, metadata: dict) -> str:
     jina_title = metadata.get('jina_title', '')
     match = re.search(r'on (?:X|Twitter):\s*"(.*?)"\s*/\s*(?:X|Twitter)$', jina_title)
@@ -1282,6 +1526,29 @@ def _pick_zhihu_question_title(markdown: str, metadata: dict) -> str:
     return re.sub(r'\s*-\s*知乎$', '', raw_title).strip() or 'untitled'
 
 
+def _pick_cninfo_notice_title(metadata: dict) -> str:
+    return '巨潮资讯最新公告'
+
+
+def _pick_sse_notice_title(metadata: dict) -> str:
+    return '上交所公司公告'
+
+
+def _pick_reuters_title(markdown: str, metadata: dict) -> str:
+    raw_title = metadata.get('jina_title', '').strip()
+    if raw_title:
+        return re.sub(r'\s*\|\s*Reuters$', '', raw_title).strip()
+    title = _pick_title(markdown, metadata)
+    return re.sub(r'\s*\|\s*Reuters$', '', title).strip()
+
+
+def _pick_hkexnews_title(markdown: str, metadata: dict) -> str:
+    raw_title = metadata.get('jina_title', '').strip()
+    if raw_title and raw_title != 'Listed Company Information Title Search':
+        return raw_title
+    return _pick_title(markdown, metadata)
+
+
 def _pick_x_author(metadata: dict) -> str:
     jina_title = metadata.get('jina_title', '')
     match = re.match(r'(.+?) on (?:X|Twitter):', jina_title)
@@ -1304,6 +1571,1093 @@ def _clean_nodeseek_body(text: str) -> str:
             lines.append(cleaned)
 
     return _join_paragraphs(lines)
+
+
+def _extract_cninfo_announcement(markdown: str, metadata: dict) -> dict:
+    normalized_lines: list[tuple[int, str]] = []
+    for index, raw_line in enumerate(markdown.splitlines()):
+        cleaned = _normalize_cninfo_line(_clean_inline_markdown(raw_line))
+        if cleaned:
+            normalized_lines.append((index, cleaned))
+
+    code_line = ''
+    company = ''
+    title = ''
+    body_start = 0
+
+    for pos, (line_index, line) in enumerate(normalized_lines):
+        if not code_line and line.startswith('证券代码'):
+            code_line = line
+            if pos + 1 < len(normalized_lines):
+                company = normalized_lines[pos + 1][1]
+            if pos + 2 < len(normalized_lines):
+                title = normalized_lines[pos + 2][1]
+                body_start = normalized_lines[pos + 2][0] + 1
+            break
+
+    if not title:
+        title = _pick_title(markdown, metadata)
+        body_start = 0
+
+    code = ''
+    sec_name = ''
+    notice_id = ''
+    meta_match = re.search(
+        r'证券代码[:：]\s*(?P<code>\d+)\s*证券简称[:：]\s*(?P<name>.+?)\s*公告编号[:：]\s*(?P<notice>[\d\-\s]+)',
+        code_line,
+    )
+    if meta_match:
+        code = meta_match.group('code').strip()
+        sec_name = meta_match.group('name').strip()
+        notice_id = re.sub(r'\s+', '', meta_match.group('notice')).strip()
+
+    body_lines: list[str] = []
+    for raw_line in markdown.splitlines()[body_start:]:
+        line = _normalize_cninfo_line(_clean_inline_markdown(raw_line))
+        if not line or _is_cninfo_announcement_noise(line):
+            continue
+        body_lines.append(line)
+
+    body = _join_cninfo_announcement_lines(body_lines)
+    full_title = ''.join(part for part in (company, title) if part)
+    if not full_title:
+        full_title = title or company or '巨潮资讯公告'
+
+    parts = [f'# {full_title}']
+    if code:
+        parts.append(f'**证券代码**: {code}')
+    if sec_name:
+        parts.append(f'**证券简称**: {sec_name}')
+    if notice_id:
+        parts.append(f'**公告编号**: {notice_id}')
+    if metadata.get('published_time'):
+        parts.append(f'**发布时间**: {metadata["published_time"]}')
+    if metadata.get('page_count'):
+        parts.append(f'**页数**: {metadata["page_count"]}')
+    parts.extend(['', '## 正文', '', body or '未提取到公告正文'])
+
+    cleaned = '\n'.join(parts).strip()
+    return {
+        'success': True,
+        'content': cleaned,
+        'metadata': {
+            **metadata,
+            'title': full_title,
+            'content_type': 'financial_disclosure',
+            'cleanup_chars_before': len(markdown.strip()),
+            'cleanup_chars_after': len(cleaned),
+        },
+    }
+
+
+def _extract_cninfo_notice_list(markdown: str, metadata: dict) -> dict:
+    notices: list[str] = []
+    for raw_line in markdown.splitlines():
+        line = raw_line.strip()
+        if not line or 'new/disclosure/detail?' not in line:
+            continue
+        code_match = re.search(r'\[(\d{6})\]\(https://www\.cninfo\.com\.cn/new/disclosure/stock\?[^)]+\)', line)
+        name_match = re.search(
+            r'\[\d{6}\]\(https://www\.cninfo\.com\.cn/new/disclosure/stock\?[^)]+\)\[([^\]]+)\]\(https://www\.cninfo\.com\.cn/new/disclosure/stock\?[^)]+\)',
+            line,
+        )
+        detail_titles = re.findall(r'\[([^\]]+)\]\(https://www\.cninfo\.com\.cn/new/disclosure/detail\?[^)]+\)', line)
+        times = re.findall(r'(20\d{2}-\d{2}-\d{2} \d{2}:\d{2})', line)
+
+        if not code_match or not name_match or not detail_titles:
+            continue
+
+        code = code_match.group(1).strip()
+        name = name_match.group(1).strip()
+
+        for idx, detail_title in enumerate(detail_titles):
+            notice_time = times[idx] if idx < len(times) else (times[-1] if times else '')
+            entry = f'- {code} {name} | {_normalize_cninfo_line(detail_title)}'
+            if notice_time:
+                entry += f' | {notice_time}'
+            notices.append(entry)
+
+    if not notices:
+        return {'success': False, 'error': '巨潮公告列表提取失败'}
+
+    title = _pick_cninfo_notice_title(metadata)
+    parts = [f'# {title}', '', '## 公告', '']
+    parts.extend(notices)
+    cleaned = '\n'.join(parts).strip()
+    return {
+        'success': True,
+        'content': cleaned,
+        'metadata': {
+            **metadata,
+            'title': title,
+            'content_type': 'financial_notice_list',
+            'cleanup_chars_before': len(markdown.strip()),
+            'cleanup_chars_after': len(cleaned),
+        },
+    }
+
+
+def _extract_sse_announcement(markdown: str, metadata: dict) -> dict:
+    normalized_lines: list[tuple[int, str]] = []
+    for index, raw_line in enumerate(markdown.splitlines()):
+        cleaned = _normalize_cninfo_line(_clean_inline_markdown(raw_line))
+        if cleaned:
+            normalized_lines.append((index, cleaned))
+
+    code_line = ''
+    company = ''
+    title = ''
+    body_start = 0
+
+    for pos, (line_index, line) in enumerate(normalized_lines):
+        if not code_line and line.startswith('证券代码'):
+            code_line = line
+            if pos + 1 < len(normalized_lines):
+                company = normalized_lines[pos + 1][1]
+            if pos + 2 < len(normalized_lines):
+                title = normalized_lines[pos + 2][1]
+                body_start = normalized_lines[pos + 2][0] + 1
+            break
+
+    if not title:
+        title = _pick_title(markdown, metadata)
+        body_start = 0
+
+    code = ''
+    sec_name = ''
+    notice_id = ''
+    meta_match = re.search(
+        r'证券代码[:：]\s*(?P<code>\d+)\s*证券简称[:：]\s*(?P<name>.+?)\s*公告编号[:：]\s*(?P<notice>[\d\-\s]+)',
+        code_line,
+    )
+    if meta_match:
+        code = meta_match.group('code').strip()
+        sec_name = meta_match.group('name').strip()
+        notice_id = re.sub(r'\s+', '', meta_match.group('notice')).strip()
+
+    body_lines: list[str] = []
+    for raw_line in markdown.splitlines()[body_start:]:
+        line = _normalize_cninfo_line(_clean_inline_markdown(raw_line))
+        if not line or _is_sse_announcement_noise(line):
+            continue
+        body_lines.append(line)
+
+    body = _join_cninfo_announcement_lines(body_lines)
+    full_title = ''.join(part for part in (company, title) if part)
+    if not full_title:
+        full_title = title or company or '上交所公告'
+
+    parts = [f'# {full_title}']
+    if code:
+        parts.append(f'**证券代码**: {code}')
+    if sec_name:
+        parts.append(f'**证券简称**: {sec_name}')
+    if notice_id:
+        parts.append(f'**公告编号**: {notice_id}')
+    if metadata.get('published_time'):
+        parts.append(f'**发布时间**: {metadata["published_time"]}')
+    if metadata.get('page_count'):
+        parts.append(f'**页数**: {metadata["page_count"]}')
+    parts.extend(['', '## 正文', '', body or '未提取到公告正文'])
+
+    cleaned = '\n'.join(parts).strip()
+    return {
+        'success': True,
+        'content': cleaned,
+        'metadata': {
+            **metadata,
+            'title': full_title,
+            'content_type': 'financial_disclosure',
+            'cleanup_chars_before': len(markdown.strip()),
+            'cleanup_chars_after': len(cleaned),
+        },
+    }
+
+
+def _extract_sse_notice_list(markdown: str, metadata: dict) -> dict:
+    notices: list[str] = []
+    pattern = re.compile(
+        r'\*\s+_(?P<date>\d{4}-\d{2}-\d{2})_\[(?P<code>\d{6})\s*:\s*(?P<title>[^\]]+)\]'
+        r'\((?P<url>https://(?:star|www|big5)\.sse\.com\.cn/[^)]+)\)'
+    )
+
+    for match in pattern.finditer(markdown):
+        notice_date = match.group('date').strip()
+        code = match.group('code').strip()
+        title = _normalize_cninfo_line(match.group('title').strip())
+        notices.append(f'- {notice_date} | {code} | {title}')
+
+    if not notices:
+        return {'success': False, 'error': '上交所公告列表提取失败'}
+
+    title = _pick_sse_notice_title(metadata)
+    parts = [f'# {title}', '', '## 公告', '']
+    parts.extend(notices)
+    cleaned = '\n'.join(parts).strip()
+    return {
+        'success': True,
+        'content': cleaned,
+        'metadata': {
+            **metadata,
+            'title': title,
+            'content_type': 'financial_notice_list',
+            'cleanup_chars_before': len(markdown.strip()),
+            'cleanup_chars_after': len(cleaned),
+        },
+    }
+
+
+def _extract_reuters_article(markdown: str, metadata: dict) -> dict:
+    title = _pick_reuters_title(markdown, metadata)
+    image = ''
+    body_lines: list[str] = []
+
+    for raw_line in markdown.splitlines():
+        line = raw_line.strip()
+        if not line:
+            if body_lines and body_lines[-1] != '':
+                body_lines.append('')
+            continue
+
+        normalized_image = _normalize_link_wrapped_image(line)
+        if normalized_image and not image:
+            image = normalized_image
+            continue
+        if line.startswith('![') and not image:
+            image = line
+            continue
+        if _is_reuters_article_noise(line):
+            break
+
+        cleaned = _clean_inline_markdown(line)
+        if not cleaned or cleaned == title:
+            continue
+        if _is_reuters_inline_noise(cleaned):
+            continue
+        body_lines.append(cleaned)
+
+    body = _join_paragraphs(body_lines)
+    if len(body.strip()) < 80:
+        return {'success': False, 'error': 'Reuters 文章提取失败'}
+
+    parts = [f'# {title}']
+    if image:
+        parts.extend(['', '## 图片', '', image])
+    parts.extend(['', '## 正文', '', body])
+
+    cleaned = '\n'.join(parts).strip()
+    return {
+        'success': True,
+        'content': cleaned,
+        'metadata': {
+            **metadata,
+            'title': title,
+            'content_type': 'financial_news_article',
+            'cleanup_chars_before': len(markdown.strip()),
+            'cleanup_chars_after': len(cleaned),
+        },
+    }
+
+
+def _extract_reuters_markets_page(markdown: str, metadata: dict) -> dict:
+    lead_title = ''
+    lead_time = ''
+    lead_summary = ''
+    sections: dict[str, list[str]] = {}
+    current_section = ''
+
+    lines = [line.strip() for line in markdown.splitlines()]
+    for idx, line in enumerate(lines):
+        if not line:
+            continue
+
+        if not lead_title and line.startswith('[') and '](' in line and not line.startswith('[Official Data Partner]'):
+            cleaned = _clean_inline_markdown(line)
+            if cleaned and cleaned not in {'Markets'}:
+                lead_title = cleaned
+                continue
+
+        if lead_title and not lead_time and line.startswith('· '):
+            lead_time = line.strip('· ').strip()
+            continue
+
+        if lead_title and not lead_summary and line and 'REUTERS/' not in line and not line.startswith('[](') and not line.startswith('## '):
+            if not line.startswith('-') and not line.startswith('['):
+                lead_summary = _clean_inline_markdown(line)
+                continue
+
+        if line.startswith('## [') and '](' in line:
+            current_section = _clean_inline_markdown(line)
+            sections.setdefault(current_section, [])
+            continue
+
+        if line.startswith('## Markets Performance'):
+            current_section = ''
+            continue
+
+        if current_section:
+            if _is_reuters_markets_noise(line):
+                continue
+            if line.startswith('-'):
+                bullet_title = _extract_reuters_bullet_title(line)
+                if bullet_title and bullet_title not in sections[current_section]:
+                    sections[current_section].append(bullet_title)
+                continue
+            if '](' in line:
+                cleaned = _clean_inline_markdown(line)
+                if cleaned and cleaned not in sections[current_section]:
+                    sections[current_section].append(cleaned)
+
+    if not lead_title:
+        return {'success': False, 'error': 'Reuters Markets 页面提取失败'}
+
+    parts = ['# Reuters Markets', '', '## Lead', '']
+    parts.append(lead_title)
+    if lead_time:
+        parts.append(lead_time)
+    if lead_summary:
+        parts.append('')
+        parts.append(lead_summary)
+
+    for section_name, entries in sections.items():
+        if not entries:
+            continue
+        parts.extend(['', f'## {section_name}', ''])
+        for entry in entries:
+            parts.append(f'- {entry}')
+
+    cleaned = '\n'.join(parts).strip()
+    return {
+        'success': True,
+        'content': cleaned,
+        'metadata': {
+            **metadata,
+            'title': 'Reuters Markets',
+            'content_type': 'financial_news_list',
+            'cleanup_chars_before': len(markdown.strip()),
+            'cleanup_chars_after': len(cleaned),
+        },
+    }
+
+
+def _extract_hkexnews_title_search(markdown: str, metadata: dict) -> dict:
+    entries: list[str] = []
+    pattern = re.compile(
+        r'Release Time:\s*(?P<time>\d{2}/\d{2}/\d{4}\s+\d{2}:\d{2})\s*\|\s*'
+        r'Stock Code:\s*(?P<code>\d+)\s*\|\s*'
+        r'Stock Short Name:\s*(?P<name>[^|]+?)\s*\|\s*'
+        r'Document:\s*(?P<category>.*?)\[(?P<title>[^\]]+)\]'
+        r'\((?P<url>https://www1\.hkexnews\.hk/listedco/listconews/sehk/[^)]+\.pdf)\)',
+        re.S,
+    )
+
+    for match in pattern.finditer(markdown):
+        release_time = match.group('time').strip()
+        code = match.group('code').strip()
+        name = match.group('name').strip()
+        category = _normalize_cninfo_line(_clean_inline_markdown(match.group('category')))
+        category = category.strip(' -|')
+        title = _normalize_cninfo_line(_clean_inline_markdown(match.group('title')))
+        entry = f'- {release_time} | {code} | {name} | {category} | {title}'
+        entries.append(entry)
+
+    if not entries:
+        return {'success': False, 'error': 'HKEXnews 标题搜索结果提取失败'}
+
+    parts = ['# HKEXnews 公司披露', '', '## 公告', '']
+    parts.extend(entries)
+    cleaned = '\n'.join(parts).strip()
+    return {
+        'success': True,
+        'content': cleaned,
+        'metadata': {
+            **metadata,
+            'title': 'HKEXnews 公司披露',
+            'content_type': 'financial_notice_list',
+            'cleanup_chars_before': len(markdown.strip()),
+            'cleanup_chars_after': len(cleaned),
+        },
+    }
+
+
+def _extract_hkexnews_announcement(markdown: str, metadata: dict) -> dict:
+    stock_code = ''
+    code_match = re.search(r'\(Stock Code:\s*(\d+)\)', markdown, re.IGNORECASE)
+    if code_match:
+        stock_code = code_match.group(1).strip()
+
+    same_line_title_match = re.search(
+        r'\(Stock Code:\s*\d+\)\s*(?P<title>.+?)\s*Independent Financial Adviser',
+        markdown,
+        re.IGNORECASE | re.S,
+    )
+    raw_lines = [line.strip() for line in markdown.splitlines()]
+    title_parts: list[str] = []
+    if same_line_title_match:
+        title = _normalize_cninfo_line(_clean_inline_markdown(same_line_title_match.group('title')))
+    else:
+        capture_title = False
+        for line in raw_lines[:40]:
+            if not line:
+                continue
+            if re.search(r'\(Stock Code:\s*\d+\)', line, re.IGNORECASE):
+                capture_title = True
+                continue
+            if not capture_title:
+                continue
+            if line.startswith('A letter from the Board'):
+                break
+            if line.startswith('THIS CIRCULAR IS IMPORTANT'):
+                continue
+            if line.startswith('If you are in any doubt'):
+                continue
+            if line.startswith('If you have sold or transferred'):
+                continue
+            if line.startswith('Hong Kong Exchanges and Clearing'):
+                continue
+            if line.startswith('(Incorporated in'):
+                continue
+            if line.startswith('SOMERLEY CAPITAL'):
+                continue
+            if re.fullmatch(r'\d+\s+[A-Za-z]+\s+\d{4}', line):
+                continue
+            if line and (line.isupper() or 'AND' in line or 'TRANSACTION' in line):
+                title_parts.append(_normalize_cninfo_line(_clean_inline_markdown(line)))
+
+        title = ' '.join(part for part in title_parts if part).strip()
+    if not title:
+        title = _pick_hkexnews_title(markdown, metadata)
+
+    body_matches = list(re.finditer(r'LETTER FROM THE BOARD\s*–\s*\d+\s*–\s*', markdown))
+    if len(body_matches) >= 2:
+        body_markdown = markdown[body_matches[1].end():]
+    elif body_matches:
+        body_markdown = markdown[body_matches[0].end():]
+    else:
+        plain_match = re.search(r'LETTER FROM THE BOARD', markdown)
+        body_markdown = markdown[plain_match.end():] if plain_match else markdown
+
+    normalized_lines = [_normalize_cninfo_line(_clean_inline_markdown(line)) for line in body_markdown.splitlines()]
+    body_lines: list[str] = []
+    for line in normalized_lines:
+        if not line or _is_hkexnews_announcement_noise(line):
+            continue
+        body_lines.append(line)
+
+    body = _join_cninfo_announcement_lines(body_lines)
+    if len(body.strip()) < 40:
+        return {'success': False, 'error': 'HKEXnews 公告正文提取失败'}
+
+    parts = [f'# {title}']
+    if stock_code:
+        parts.append(f'**证券代码**: {stock_code}')
+    if metadata.get('published_time'):
+        parts.append(f'**发布时间**: {metadata["published_time"]}')
+    if metadata.get('page_count'):
+        parts.append(f'**页数**: {metadata["page_count"]}')
+    parts.extend(['', '## 正文', '', body])
+
+    cleaned = '\n'.join(parts).strip()
+    return {
+        'success': True,
+        'content': cleaned,
+        'metadata': {
+            **metadata,
+            'title': title,
+            'content_type': 'financial_disclosure',
+            'cleanup_chars_before': len(markdown.strip()),
+            'cleanup_chars_after': len(cleaned),
+        },
+    }
+
+
+def _extract_sec_browse_page(markdown: str, metadata: dict) -> dict:
+    entries: list[str] = []
+    pattern = re.compile(
+        r'(?P<form>[A-Z0-9\-\/]+)'
+        r'\[(?P<description>.*?)\s+Open document\]\((?P<doc_url>https://www\.sec\.gov/[^)]+)\)'
+        r'.*?'
+        r'\[Filing Open filing\]\((?P<index_url>https://www\.sec\.gov/Archives/edgar/data/[^)]+-index\.htm)\)'
+        r'Click to Open filing\s*(?P<filing_date>\d{4}-\d{2}-\d{2})?',
+        re.S,
+    )
+
+    for match in pattern.finditer(markdown):
+        form = match.group('form').strip()
+        desc = _normalize_cninfo_line(match.group('description').strip())
+        filing_date = (match.group('filing_date') or '').strip()
+        index_url = match.group('index_url').strip()
+        if re.fullmatch(r'\d{4}-\d{2}-\d{2}', form):
+            continue
+        if 'View all with same reporting date' in desc:
+            continue
+        entry = f'- {form} | {desc}'
+        if filing_date:
+            entry += f' | {filing_date}'
+        entry += f' | {index_url}'
+        entries.append(entry)
+
+    if not entries:
+        return {'success': False, 'error': 'SEC EDGAR filings 列表提取失败'}
+
+    cleaned = '\n'.join(['# SEC EDGAR Filings', '', '## Filings', '', *entries]).strip()
+    return {
+        'success': True,
+        'content': cleaned,
+        'metadata': {
+            **metadata,
+            'title': 'SEC EDGAR Filings',
+            'content_type': 'financial_notice_list',
+            'cleanup_chars_before': len(markdown.strip()),
+            'cleanup_chars_after': len(cleaned),
+        },
+    }
+
+
+def _extract_sec_filing_index_page(markdown: str, metadata: dict, url: str) -> dict:
+    filing_id_match = re.search(r'EDGAR Filing Documents for ([\d-]+)', metadata.get('jina_title', ''))
+    filing_id = filing_id_match.group(1).strip() if filing_id_match else url.rstrip('/').split('/')[-1].replace('-index.htm', '')
+
+    filing_date_match = re.search(r'Filing Date\s+(\d{4}-\d{2}-\d{2})', markdown)
+    accepted_match = re.search(r'Accepted\s+(\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2})', markdown)
+    period_match = re.search(r'Period of Report\s+(\d{4}-\d{2}-\d{2})', markdown)
+
+    filing_date = filing_date_match.group(1).strip() if filing_date_match else ''
+    accepted = accepted_match.group(1).strip() if accepted_match else ''
+    period = period_match.group(1).strip() if period_match else ''
+
+    document_lines = re.findall(
+        r'\|\s*(\d+)\s*\|\s*([^|]+?)\s*\|\s*\[([^\]]+)\]\([^)]+\).*?\|\s*([^|]+?)\s*\|\s*(\d+)\s*\|',
+        markdown,
+        re.S,
+    )
+
+    if not document_lines:
+        return {'success': False, 'error': 'SEC Filing index 提取失败'}
+
+    parts = [f'# SEC Filing {filing_id}']
+    if filing_date:
+        parts.append(f'**Filing Date**: {filing_date}')
+    if accepted:
+        parts.append(f'**Accepted**: {accepted}')
+    if period:
+        parts.append(f'**Period of Report**: {period}')
+    parts.extend(['', '## Documents', ''])
+
+    for seq, desc, doc_name, doc_type, size in document_lines:
+        parts.append(f'- {seq} | {desc.strip()} | {doc_type.strip()} | {size.strip()} | {doc_name.strip()}')
+
+    cleaned = '\n'.join(parts).strip()
+    return {
+        'success': True,
+        'content': cleaned,
+        'metadata': {
+            **metadata,
+            'title': f'SEC Filing {filing_id}',
+            'content_type': 'financial_disclosure',
+            'cleanup_chars_before': len(markdown.strip()),
+            'cleanup_chars_after': len(cleaned),
+        },
+    }
+
+
+def _extract_cls_home_page(markdown: str, metadata: dict) -> dict:
+    entries: list[str] = []
+    for raw_line in markdown.splitlines():
+        line = raw_line.strip()
+        if not line:
+            continue
+        if _is_cls_home_noise(line):
+            continue
+        link_matches = re.findall(r'\[([^\]]+)\]\(https://www\.cls\.cn/detail/\d+\)', line)
+        if not link_matches:
+            continue
+        for title in link_matches:
+            cleaned = _normalize_cninfo_line(_clean_inline_markdown(title))
+            if cleaned and cleaned not in entries:
+                entries.append(cleaned)
+
+    if not entries:
+        return {'success': False, 'error': '财联社首页新闻流提取失败'}
+
+    cleaned = '\n'.join(['# 财联社要闻', '', '## 新闻流', '', *[f'- {item}' for item in entries]]).strip()
+    return {
+        'success': True,
+        'content': cleaned,
+        'metadata': {
+            **metadata,
+            'title': '财联社要闻',
+            'content_type': 'financial_news_list',
+            'cleanup_chars_before': len(markdown.strip()),
+            'cleanup_chars_after': len(cleaned),
+        },
+    }
+
+
+def _extract_cls_detail_page(markdown: str, metadata: dict) -> dict:
+    title = _pick_title(markdown, metadata)
+    publish_time = ''
+    source = ''
+    summary_lines: list[str] = []
+    body_lines: list[str] = []
+    in_body = False
+
+    for raw_line in markdown.splitlines():
+        line = raw_line.strip()
+        if not line:
+            if in_body and body_lines and body_lines[-1] != '':
+                body_lines.append('')
+            continue
+
+        if _is_cls_detail_tail(line):
+            break
+        if _is_cls_detail_noise(line, title):
+            continue
+
+        if not publish_time and re.fullmatch(r'\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}\s+星期[一二三四五六日天]', line):
+            publish_time = line
+            continue
+        if not source and line.startswith('财联社 '):
+            source = line
+            continue
+        if line.startswith('①') or line.startswith('②') or line.startswith('③'):
+            summary_lines.append(line)
+            continue
+
+        if not in_body and ('财联社' in line and '日讯' in line):
+            in_body = True
+
+        if in_body:
+            cleaned = _normalize_cninfo_line(_clean_inline_markdown(line))
+            if cleaned:
+                body_lines.append(cleaned)
+
+    body = _join_paragraphs(body_lines)
+    if len(body.strip()) < 60:
+        return {'success': False, 'error': '财联社文章正文提取失败'}
+
+    parts = [f'# {title}']
+    if publish_time:
+        parts.append(f'**发布时间**: {publish_time}')
+    if source:
+        parts.append(f'**来源**: {source}')
+    if summary_lines:
+        parts.extend(['', '## 摘要', ''])
+        parts.extend(summary_lines)
+    parts.extend(['', '## 正文', '', body])
+
+    cleaned = '\n'.join(parts).strip()
+    return {
+        'success': True,
+        'content': cleaned,
+        'metadata': {
+            **metadata,
+            'title': title,
+            'content_type': 'financial_news_article',
+            'cleanup_chars_before': len(markdown.strip()),
+            'cleanup_chars_after': len(cleaned),
+        },
+    }
+
+
+def _extract_eastmoney_home_page(markdown: str, metadata: dict) -> dict:
+    entries: list[str] = []
+    for raw_line in markdown.splitlines():
+        line = raw_line.strip()
+        if not line:
+            continue
+        if _is_eastmoney_home_noise(line):
+            continue
+        link_matches = re.findall(r'\[([^\]]+)\]\((?:https?://)?(?:finance|biz)\.eastmoney\.com/a/\d+\.html[^\)]*\)', line)
+        if not link_matches:
+            continue
+        for title in link_matches:
+            cleaned = _normalize_cninfo_line(_clean_inline_markdown(title))
+            if cleaned and cleaned not in entries:
+                entries.append(cleaned)
+
+    if not entries:
+        return {'success': False, 'error': '东方财富首页新闻流提取失败'}
+
+    cleaned = '\n'.join(['# 东方财富财经要闻', '', '## 新闻流', '', *[f'- {item}' for item in entries]]).strip()
+    return {
+        'success': True,
+        'content': cleaned,
+        'metadata': {
+            **metadata,
+            'title': '东方财富财经要闻',
+            'content_type': 'financial_news_list',
+            'cleanup_chars_before': len(markdown.strip()),
+            'cleanup_chars_after': len(cleaned),
+        },
+    }
+
+
+def _extract_eastmoney_article_page(markdown: str, metadata: dict) -> dict:
+    title = _pick_title(markdown, metadata)
+    publish_time = ''
+    source = ''
+    body_lines: list[str] = []
+    in_body = False
+
+    for raw_line in markdown.splitlines():
+        line = raw_line.strip()
+        if not line:
+            if in_body and body_lines and body_lines[-1] != '':
+                body_lines.append('')
+            continue
+        if _is_eastmoney_article_tail(line):
+            break
+        if _is_eastmoney_article_noise(line, title):
+            continue
+
+        if not publish_time and re.fullmatch(r'\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}', line):
+            publish_time = line
+            continue
+        if not source and line.startswith('来源：'):
+            source = line.replace('来源：', '').strip()
+            continue
+
+        if not in_body and ('讯，' in line or '讯，' in _normalize_cninfo_line(line)):
+            in_body = True
+
+        if in_body:
+            cleaned = _normalize_cninfo_line(_clean_inline_markdown(line))
+            if cleaned:
+                body_lines.append(cleaned)
+
+    body = _join_paragraphs(body_lines)
+    if len(body.strip()) < 50:
+        return {'success': False, 'error': '东方财富文章正文提取失败'}
+
+    parts = [f'# {title}']
+    if publish_time:
+        parts.append(f'**发布时间**: {publish_time}')
+    if source:
+        parts.append(f'**来源**: {source}')
+    parts.extend(['', '## 正文', '', body])
+
+    cleaned = '\n'.join(parts).strip()
+    return {
+        'success': True,
+        'content': cleaned,
+        'metadata': {
+            **metadata,
+            'title': title,
+            'content_type': 'financial_news_article',
+            'cleanup_chars_before': len(markdown.strip()),
+            'cleanup_chars_after': len(cleaned),
+        },
+    }
+
+
+def _extract_sinafinance_home_page(markdown: str, metadata: dict) -> dict:
+    entries: list[str] = []
+    for raw_line in markdown.splitlines():
+        line = raw_line.strip()
+        if not line or _is_sinafinance_home_noise(line):
+            continue
+        links = re.findall(r'\[([^\]]+)\]\((?:https?://)?finance\.sina\.com\.cn/[^\)]*doc-[^\)]*\.shtml\)', line)
+        if not links:
+            continue
+        for title in links:
+            cleaned = _normalize_cninfo_line(_clean_inline_markdown(title))
+            if cleaned and cleaned not in entries:
+                entries.append(cleaned)
+
+    if not entries:
+        return {'success': False, 'error': '新浪财经首页新闻流提取失败'}
+
+    cleaned = '\n'.join(['# 新浪财经要闻', '', '## 新闻流', '', *[f'- {item}' for item in entries]]).strip()
+    return {
+        'success': True,
+        'content': cleaned,
+        'metadata': {
+            **metadata,
+            'title': '新浪财经要闻',
+            'content_type': 'financial_news_list',
+            'cleanup_chars_before': len(markdown.strip()),
+            'cleanup_chars_after': len(cleaned),
+        },
+    }
+
+
+def _extract_sinafinance_article_page(markdown: str, metadata: dict) -> dict:
+    title = _pick_title(markdown, metadata)
+    title = re.sub(r'[_|－-]\s*新浪财经.*$', '', title).strip()
+
+    publish_time = ''
+    source = ''
+    body_lines: list[str] = []
+    in_body = False
+
+    for raw_line in markdown.splitlines():
+        line = raw_line.strip()
+        if not line:
+            if in_body and body_lines and body_lines[-1] != '':
+                body_lines.append('')
+            continue
+        if _is_sinafinance_article_tail(line):
+            break
+        if _is_sinafinance_article_noise(line, title):
+            continue
+
+        if not publish_time and re.fullmatch(r'\d{4}年\d{2}月\d{2}日\s+\d{2}:\d{2}(?:\s+\S+)?', line):
+            publish_time = line
+            continue
+        if not source and line.startswith('来源：'):
+            source = line.split('：', 1)[1].strip()
+            continue
+
+        if not in_body and ('讯，' in line or line.startswith('编者按：')):
+            in_body = True
+
+        if in_body:
+            cleaned = _normalize_cninfo_line(_clean_inline_markdown(line))
+            if cleaned:
+                body_lines.append(cleaned)
+
+    body = _join_paragraphs(body_lines)
+    if len(body.strip()) < 50:
+        return {'success': False, 'error': '新浪财经文章正文提取失败'}
+
+    parts = [f'# {title}']
+    if publish_time:
+        parts.append(f'**发布时间**: {publish_time}')
+    if source:
+        parts.append(f'**来源**: {source}')
+    parts.extend(['', '## 正文', '', body])
+
+    cleaned = '\n'.join(parts).strip()
+    return {
+        'success': True,
+        'content': cleaned,
+        'metadata': {
+            **metadata,
+            'title': title,
+            'content_type': 'financial_news_article',
+            'cleanup_chars_before': len(markdown.strip()),
+            'cleanup_chars_after': len(cleaned),
+        },
+    }
+
+
+def _extract_wallstreetcn_home_page(markdown: str, metadata: dict) -> dict:
+    entries: list[str] = []
+    for raw_line in markdown.splitlines():
+        line = raw_line.strip()
+        if not line or _is_wallstreetcn_home_noise(line):
+            continue
+        links = re.findall(r'\[([^\]]+)\]\(https://wallstreetcn\.com/(?:articles|livenews)/\d+\)', line)
+        if not links:
+            continue
+        for title in links:
+            cleaned = _normalize_cninfo_line(_clean_inline_markdown(title))
+            if cleaned and cleaned not in entries:
+                entries.append(cleaned)
+
+    if not entries:
+        return {'success': False, 'error': '华尔街见闻首页新闻流提取失败'}
+
+    cleaned = '\n'.join(['# 华尔街见闻要闻', '', '## 新闻流', '', *[f'- {item}' for item in entries]]).strip()
+    return {
+        'success': True,
+        'content': cleaned,
+        'metadata': {
+            **metadata,
+            'title': '华尔街见闻要闻',
+            'content_type': 'financial_news_list',
+            'cleanup_chars_before': len(markdown.strip()),
+            'cleanup_chars_after': len(cleaned),
+        },
+    }
+
+
+def _extract_wallstreetcn_article_page(markdown: str, metadata: dict) -> dict:
+    title = _pick_title(markdown, metadata)
+    title = re.sub(r'\s*-\s*华尔街见闻$', '', title).strip()
+
+    publish_time = ''
+    source = ''
+    body_lines: list[str] = []
+    in_body = False
+
+    for raw_line in markdown.splitlines():
+        line = raw_line.strip()
+        if not line:
+            if in_body and body_lines and body_lines[-1] != '':
+                body_lines.append('')
+            continue
+        if _is_wallstreetcn_article_tail(line):
+            break
+        if _is_wallstreetcn_article_noise(line, title):
+            continue
+
+        author_match = re.search(r'(.+?)\s+(\d{2}-\d{2}\s+\d{2}:\d{2})$', line)
+        if not publish_time and author_match:
+            source = _normalize_cninfo_line(_clean_inline_markdown(author_match.group(1))).strip()
+            source = re.sub(r'^article\.author\.display_name', '', source).strip()
+            publish_time = author_match.group(2).strip()
+            continue
+
+        if line.startswith('更多消息，持续更新中'):
+            continue
+
+        if not in_body and line.startswith('美国4月非农就业人口增加'):
+            in_body = True
+
+        if in_body:
+            cleaned = _normalize_cninfo_line(_clean_inline_markdown(line))
+            if cleaned:
+                body_lines.append(cleaned)
+
+    body = _join_paragraphs(body_lines)
+    if len(body.strip()) < 30:
+        return {'success': False, 'error': '华尔街见闻文章正文提取失败'}
+
+    parts = [f'# {title}']
+    if publish_time:
+        parts.append(f'**发布时间**: {publish_time}')
+    if source:
+        parts.append(f'**来源**: {source}')
+    parts.extend(['', '## 正文', '', body])
+
+    cleaned = '\n'.join(parts).strip()
+    return {
+        'success': True,
+        'content': cleaned,
+        'metadata': {
+            **metadata,
+            'title': title,
+            'content_type': 'financial_news_article',
+            'cleanup_chars_before': len(markdown.strip()),
+            'cleanup_chars_after': len(cleaned),
+        },
+    }
+
+
+def _extract_maimai_article_page(markdown: str, metadata: dict) -> dict:
+    title = _pick_title(markdown, metadata)
+    title = re.sub(r'脉脉$', '', title).strip()
+
+    author = ''
+    publish_time = ''
+    role = ''
+    body_lines: list[str] = []
+    after_title = False
+
+    for raw_line in markdown.splitlines():
+        line = raw_line.strip()
+        if not line:
+            if after_title and body_lines and body_lines[-1] != '':
+                body_lines.append('')
+            continue
+        if _is_maimai_article_tail(line):
+            break
+
+        cleaned = _normalize_cninfo_line(_clean_inline_markdown(line))
+        if not cleaned:
+            continue
+        if cleaned == title:
+            after_title = True
+            continue
+        if _is_maimai_article_noise(cleaned, title):
+            continue
+        if not after_title:
+            continue
+
+        if not author:
+            author = cleaned
+            continue
+
+        if not publish_time:
+            meta_match = re.fullmatch(r'(\d{2,4}-\d{1,2}-\d{1,2})\s*·\s*(.+)', cleaned)
+            if meta_match:
+                publish_time = meta_match.group(1).strip()
+                role = meta_match.group(2).strip()
+                continue
+
+        body_lines.append(cleaned)
+
+    body = _join_paragraphs(body_lines)
+    if len(body.strip()) < 20:
+        return {'success': False, 'error': '脉脉文章正文提取失败'}
+
+    parts = [f'# {title}']
+    if author:
+        parts.append(f'**作者**: {author}')
+    if publish_time:
+        parts.append(f'**发布时间**: {publish_time}')
+    if role:
+        parts.append(f'**身份**: {role}')
+    parts.extend(['', '## 正文', '', body])
+
+    cleaned = '\n'.join(parts).strip()
+    return {
+        'success': True,
+        'content': cleaned,
+        'metadata': {
+            **metadata,
+            'title': title,
+            'content_type': 'jobhunter_article',
+            'cleanup_chars_before': len(markdown.strip()),
+            'cleanup_chars_after': len(cleaned),
+        },
+    }
+
+
+def _extract_nowcoder_discuss_page(markdown: str, metadata: dict) -> dict:
+    title = _pick_title(markdown, metadata)
+    title = re.sub(r'_牛客网$', '', title).strip()
+
+    body_lines: list[str] = []
+    after_title = False
+
+    for raw_line in markdown.splitlines():
+        line = raw_line.strip()
+        if not line:
+            if after_title and body_lines and body_lines[-1] != '':
+                body_lines.append('')
+            continue
+        if _is_nowcoder_discuss_tail(line):
+            break
+
+        cleaned = _normalize_cninfo_line(_clean_inline_markdown(line))
+        if not cleaned:
+            continue
+        if cleaned == title:
+            after_title = True
+            continue
+        if _is_nowcoder_discuss_noise(cleaned, title):
+            continue
+        if not after_title:
+            continue
+
+        if raw_line.lstrip().startswith('#'):
+            if body_lines and body_lines[-1] != '':
+                body_lines.append('')
+            body_lines.append(f'## {cleaned}')
+            body_lines.append('')
+            continue
+
+        body_lines.append(cleaned)
+
+    body = _join_paragraphs(body_lines)
+    if len(body.strip()) < 30:
+        return {'success': False, 'error': '牛客讨论帖正文提取失败'}
+
+    cleaned = '\n'.join([f'# {title}', '', '## 正文', '', body]).strip()
+    return {
+        'success': True,
+        'content': cleaned,
+        'metadata': {
+            **metadata,
+            'title': title,
+            'content_type': 'jobhunter_discuss_post',
+            'cleanup_chars_before': len(markdown.strip()),
+            'cleanup_chars_after': len(cleaned),
+        },
+    }
 
 
 def _clean_zhihu_answer_body(lines: list[str]) -> str:
@@ -1335,6 +2689,49 @@ def _clean_zhihu_answer_body(lines: list[str]) -> str:
         kept = trimmed
 
     return _join_paragraphs(kept)
+
+
+def _normalize_cninfo_line(text: str) -> str:
+    text = re.sub(r'\s+', ' ', text).strip()
+    text = re.sub(r'：\s+', '：', text)
+    text = re.sub(r'\s+：', '：', text)
+    text = re.sub(r'(?<=[\u4e00-\u9fff])\s+(?=[\u4e00-\u9fff])', '', text)
+    text = re.sub(r'(?<=\d)\s*-\s*(?=\d)', '-', text)
+    return text.strip()
+
+
+def _join_cninfo_announcement_lines(lines: list[str]) -> str:
+    chunks: list[str] = []
+    current = ''
+
+    for line in lines:
+        if not line:
+            if current:
+                chunks.append(current.strip())
+                current = ''
+            continue
+
+        if _is_cninfo_heading_line(line):
+            if current:
+                chunks.append(current.strip())
+                current = ''
+            chunks.append(line)
+            continue
+
+        if not current:
+            current = line
+            continue
+
+        if _should_merge_cninfo_line(current, line):
+            current += line
+        else:
+            chunks.append(current.strip())
+            current = line
+
+    if current:
+        chunks.append(current.strip())
+
+    return '\n\n'.join(chunk for chunk in chunks if chunk).strip()
 
 
 def _extract_vanilla_replies(comments_block: str) -> list[dict[str, str]]:
@@ -1484,6 +2881,113 @@ def _looks_like_zhihu_bio_line(first_line: str, second_line: str) -> bool:
     return False
 
 
+def _is_cninfo_notice_list(url: str, markdown: str) -> bool:
+    lowered_url = url.lower()
+    if 'disclosure/list/notice' in lowered_url:
+        return True
+    return 'new/disclosure/detail?' not in lowered_url and '共 ' in markdown and '条' in markdown and 'new/disclosure/detail?' in markdown
+
+
+def _is_cninfo_announcement_document(url: str, markdown: str) -> bool:
+    lowered_url = url.lower()
+    if 'static.cninfo.com.cn/finalpage/' in lowered_url:
+        return True
+    if lowered_url.endswith('.pdf'):
+        return True
+    return '证券代码' in markdown and '公告编号' in markdown
+
+
+def _is_sse_notice_list(url: str, markdown: str) -> bool:
+    lowered_url = url.lower()
+    if 'listannouncement' in lowered_url:
+        return True
+    return '公司公告' in markdown and 'disclosure/listedinfo/announcement/' in markdown
+
+
+def _is_sse_announcement_document(url: str, markdown: str) -> bool:
+    lowered_url = url.lower()
+    if lowered_url.endswith('.pdf'):
+        return True
+    return '证券代码' in markdown and '公告编号' in markdown and '上海证券交易所' in markdown
+
+
+def _is_reuters_markets_page(url: str, markdown: str) -> bool:
+    lowered_url = url.lower()
+    if '/markets/' in lowered_url and lowered_url.rstrip('/').endswith('/markets'):
+        return True
+    return markdown.startswith('# Markets')
+
+
+def _is_hkexnews_title_search_page(url: str, markdown: str) -> bool:
+    lowered_url = url.lower()
+    if 'titlesearch.xhtml' in lowered_url:
+        return True
+    return 'Release Time:' in markdown and 'Stock Short Name:' in markdown and 'listedco/listconews/sehk/' in markdown
+
+
+def _is_hkexnews_announcement_document(url: str, markdown: str) -> bool:
+    lowered_url = url.lower()
+    if lowered_url.endswith('.pdf') and 'hkexnews.hk' in lowered_url:
+        return True
+    return '(Stock Code:' in markdown and 'LETTER FROM THE BOARD' in markdown
+
+
+def _is_sec_browse_page(url: str, markdown: str) -> bool:
+    lowered_url = url.lower()
+    if '/edgar/browse/' in lowered_url:
+        return True
+    return 'Click to Open filing' in markdown and 'Open document' in markdown
+
+
+def _is_sec_filing_index_page(url: str, markdown: str) -> bool:
+    lowered_url = url.lower()
+    if lowered_url.endswith('-index.htm'):
+        return True
+    return 'Document Format Files' in markdown and 'Filing Date' in markdown and 'Period of Report' in markdown
+
+
+def _is_cls_detail_page(url: str, markdown: str) -> bool:
+    lowered_url = url.lower()
+    if '/detail/' in lowered_url:
+        return True
+    return '财联社 ' in markdown and '我要评论' in markdown
+
+
+def _is_eastmoney_article_page(url: str, markdown: str) -> bool:
+    lowered_url = url.lower()
+    if re.search(r'/a/\d+\.html', lowered_url):
+        return True
+    return '来源：' in markdown and ('相关阅读' in markdown or '责任编辑' in markdown)
+
+
+def _is_sinafinance_article_page(url: str, markdown: str) -> bool:
+    lowered_url = url.lower()
+    if 'doc-' in lowered_url and lowered_url.endswith('.shtml'):
+        return True
+    return '来源：' in markdown and ('责任编辑' in markdown or '热门评论' in markdown)
+
+
+def _is_wallstreetcn_article_page(url: str, markdown: str) -> bool:
+    lowered_url = url.lower()
+    if '/articles/' in lowered_url:
+        return True
+    return '风险提示及免责条款' in markdown and '写评论' in markdown
+
+
+def _is_maimai_article_page(url: str, markdown: str) -> bool:
+    lowered_url = url.lower()
+    if '/article/detail' in lowered_url:
+        return True
+    return '脉脉App内打开' in markdown and 'add-friend好友' in markdown
+
+
+def _is_nowcoder_discuss_page(url: str, markdown: str) -> bool:
+    lowered_url = url.lower()
+    if '/discuss/' in lowered_url:
+        return True
+    return '热门话题' in markdown and '邀请牛友回答' in markdown
+
+
 def _truncate_nodeseek_tail(text: str) -> str:
     markers = (
         '\n[登录](',
@@ -1550,6 +3054,300 @@ def _is_zhihu_answer_tail(line: str) -> bool:
     if line.startswith('大家都在搜'):
         return True
     return False
+
+
+def _is_cninfo_announcement_noise(line: str) -> bool:
+    if line.startswith('本公司董事会及全体董事保证'):
+        return True
+    if line.startswith('本公司及董事会全体成员保证'):
+        return True
+    if line.startswith('述或者重大遗漏'):
+        return True
+    if '真实性、准确性和完整性承担法律责任' in line:
+        return True
+    if re.fullmatch(r'第\s*\d+\s*页', line):
+        return True
+    return False
+
+
+def _is_sse_announcement_noise(line: str) -> bool:
+    if line.startswith('本公司董事会及全体董事保证'):
+        return True
+    if line.startswith('本公司及董事会全体成员保证'):
+        return True
+    if line.startswith('述或者重大遗漏'):
+        return True
+    if '真实性、准确性和完整性承担个别及连带责任' in line:
+        return True
+    if re.fullmatch(r'第\s*\d+\s*页', line):
+        return True
+    return False
+
+
+def _is_reuters_article_noise(line: str) -> bool:
+    return (
+        line.startswith('## Read Next')
+        or line.startswith('Our Standards:')
+        or line.startswith('[Purchase Licensing Rights]')
+    )
+
+
+def _is_reuters_inline_noise(line: str) -> bool:
+    lowered = line.lower()
+    if line.startswith('Advertisement · Scroll to continue'):
+        return True
+    if line.startswith('The Week in Breakingviews newsletter offers'):
+        return True
+    if line.startswith('Skip to main content'):
+        return True
+    if line.startswith('Exclusive news, data and analytics for financial market professionals'):
+        return True
+    if 'purchase licensing rights' in lowered:
+        return True
+    return False
+
+
+def _is_reuters_markets_noise(line: str) -> bool:
+    if line.startswith('Official Data Partner'):
+        return True
+    if line.startswith('Notice of Your Privacy Choices'):
+        return True
+    if 'category]' in line:
+        return False
+    if re.fullmatch(r'\d{1,2}:\d{2}\s+[AP]M\s+GMT\+8', line):
+        return True
+    return False
+
+
+def _extract_reuters_bullet_title(line: str) -> str:
+    matches = re.findall(r'\[([^\]]+)\]\(([^)]+)\)', line)
+    if not matches:
+        return ''
+    return matches[-1][0].strip()
+
+
+def _is_hkexnews_announcement_noise(line: str) -> bool:
+    if line.startswith('The notice convening the SGM'):
+        return True
+    if line.startswith('Capitalised terms used'):
+        return True
+    if line.startswith('– ') or line == 'CONTENTS':
+        return True
+    return False
+
+
+def _is_cls_home_noise(line: str) -> bool:
+    if line.startswith('[') and 'our?nav=' in line:
+        return True
+    if '上证指数' in line or '深证成指' in line or '创业板指' in line:
+        return True
+    if '热门板块' in line or '财联社电报' in line:
+        return True
+    if line.startswith('注册|登录'):
+        return True
+    if line.startswith('## [首页]'):
+        return True
+    return False
+
+
+def _is_cls_detail_noise(line: str, title: str) -> bool:
+    if line == title:
+        return True
+    if line.startswith('[') and 'our?nav=' in line:
+        return True
+    if line == '原创':
+        return True
+    if line.startswith('[环球市场情报]'):
+        return True
+    if line == '收藏' or line.startswith('阅 '):
+        return True
+    if line.startswith('关于我们') or line.startswith('## [首页]'):
+        return True
+    return False
+
+
+def _is_cls_detail_tail(line: str) -> bool:
+    if line.startswith('我要评论'):
+        return True
+    if line.startswith('关联话题'):
+        return True
+    if '版权所有' in line:
+        return True
+    return False
+
+
+def _is_eastmoney_home_noise(line: str) -> bool:
+    if line.startswith('*   [焦点]') or line.startswith('* [焦点]'):
+        return True
+    if '全球时间:' in line:
+        return True
+    if '上证指数' in line or '深证成指' in line or '道琼斯指数' in line:
+        return True
+    if '秒后刷新' in line or line.startswith('[刷新]'):
+        return True
+    if line.startswith('热门板块'):
+        return True
+    return False
+
+
+def _is_eastmoney_article_noise(line: str, title: str) -> bool:
+    if line == title:
+        return True
+    if line.startswith('[首页]'):
+        return True
+    if line == '收藏' or line == '评论':
+        return True
+    return False
+
+
+def _is_eastmoney_article_tail(line: str) -> bool:
+    if line.startswith('相关阅读'):
+        return True
+    if line.startswith('网友点击'):
+        return True
+    return False
+
+
+def _is_sinafinance_home_noise(line: str) -> bool:
+    if '新浪首页' in line and '巴菲特股东大会' in line:
+        return True
+    if line.startswith('*') and 'finance.sina.com.cn/' in line:
+        return True
+    if line.startswith('[环球市场>>]'):
+        return True
+    if '上证综指' in line or '环球股指' in line:
+        return True
+    if line.startswith('热门资讯'):
+        return True
+    return False
+
+
+def _is_sinafinance_article_noise(line: str, title: str) -> bool:
+    if line == title:
+        return True
+    if line.startswith('*   [新浪首页]') or line.startswith('* [新浪首页]'):
+        return True
+    if line.startswith('[基金]') and '>正文' in line:
+        return True
+    if line.startswith('[新浪财经APP]'):
+        return True
+    return False
+
+
+def _is_sinafinance_article_tail(line: str) -> bool:
+    if line.startswith('责任编辑：'):
+        return True
+    if line.startswith('热门评论'):
+        return True
+    if line.startswith('加载更多'):
+        return True
+    if line == '东方财富':
+        return True
+    return False
+
+
+def _is_wallstreetcn_home_noise(line: str) -> bool:
+    if line.startswith('*') and 'wallstreetcn.com/' in line:
+        return True
+    if line.startswith('登录 / 注册'):
+        return True
+    if '美元指数' in line or '现货黄金' in line or '离岸人民币' in line:
+        return True
+    if line.startswith('最新资讯') or line.startswith('华尔街见闻'):
+        return True
+    return False
+
+
+def _is_wallstreetcn_article_noise(line: str, title: str) -> bool:
+    if line == title:
+        return True
+    if line.startswith('*') and 'wallstreetcn.com/' in line:
+        return True
+    if line.startswith('登录 / 注册'):
+        return True
+    if line in {'2', '收藏'}:
+        return True
+    return False
+
+
+def _is_wallstreetcn_article_tail(line: str) -> bool:
+    if line.startswith('风险提示及免责条款'):
+        return True
+    if line.startswith('写评论'):
+        return True
+    if line.startswith('最热文章'):
+        return True
+    return False
+
+
+def _is_maimai_article_noise(line: str, title: str) -> bool:
+    if line == title:
+        return True
+    if line in {'登录 / 注册', 'add-friend好友', '相关推荐', '评论'}:
+        return True
+    if line == f'{title}脉脉':
+        return True
+    return False
+
+
+def _is_maimai_article_tail(line: str) -> bool:
+    if line == 'END':
+        return True
+    if line.startswith('阅读'):
+        return True
+    if line.startswith('声明：'):
+        return True
+    if line.startswith('相关推荐'):
+        return True
+    if line.startswith('最新发布') or line.startswith('大家都在看'):
+        return True
+    if line.startswith('热门人脉圈') or line.startswith('评论'):
+        return True
+    if line.startswith('脉脉App内打开'):
+        return True
+    if line.startswith('登录查看更多内容'):
+        return True
+    return False
+
+
+def _is_nowcoder_discuss_noise(line: str, title: str) -> bool:
+    if line == title:
+        return True
+    if line == '精华':
+        return True
+    return False
+
+
+def _is_nowcoder_discuss_tail(line: str) -> bool:
+    if line.startswith('[#'):
+        return True
+    if line in {'提示', '订阅专刊', '浏览', '评论', '热门话题', '话题', '表情'}:
+        return True
+    if line.startswith('点赞成功') or line.startswith('邀请牛友回答'):
+        return True
+    if line.startswith('送花成功') or line.startswith('畅所欲言吧'):
+        return True
+    if line.startswith('共0张') or line.startswith('最近使用'):
+        return True
+    return False
+
+
+def _is_cninfo_heading_line(line: str) -> bool:
+    return bool(
+        re.match(r'^[一二三四五六七八九十]+、', line)
+        or re.match(r'^（[一二三四五六七八九十]+）', line)
+        or re.match(r'^\d+[\.、]', line)
+    )
+
+
+def _should_merge_cninfo_line(current: str, next_line: str) -> bool:
+    if _is_cninfo_heading_line(current):
+        return False
+    if _is_cninfo_heading_line(next_line):
+        return False
+    if re.search(r'[。！？；：]$', current):
+        return False
+    return True
 
 
 def _is_x_noise(line: str) -> bool:

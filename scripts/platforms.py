@@ -56,6 +56,18 @@ PLATFORMS = {
         'preferred_strategies': ['firecrawl', 'opencli_browser', 'jina', 'playwright'],
         'cleanup_profile': 'article_feed',
     },
+    'maimai': {
+        'name': '脉脉',
+        'domains': ['maimai.cn', 'www.maimai.cn'],
+        'preferred_strategies': ['firecrawl', 'opencli_browser', 'jina', 'playwright'],
+        'cleanup_profile': 'generic',
+    },
+    'nowcoder': {
+        'name': '牛客',
+        'domains': ['nowcoder.com', 'www.nowcoder.com'],
+        'preferred_strategies': ['firecrawl', 'opencli_browser', 'jina', 'playwright'],
+        'cleanup_profile': 'generic',
+    },
     'weibo': {
         'name': '微博',
         'domains': ['weibo.com', 'm.weibo.cn'],
@@ -85,6 +97,18 @@ PLATFORMS = {
         'domains': ['baidu.com', 'baijiahao.baidu.com'],
         'preferred_strategies': ['firecrawl', 'opencli_browser', 'jina', 'playwright'],
         'cleanup_profile': 'article_feed',
+    },
+    'cninfo': {
+        'name': '巨潮资讯',
+        'domains': ['cninfo.com.cn', 'www.cninfo.com.cn', 'static.cninfo.com.cn'],
+        'preferred_strategies': ['jina', 'opencli_browser', 'playwright'],
+        'cleanup_profile': 'generic',
+    },
+    'sse': {
+        'name': '上交所',
+        'domains': ['sse.com.cn', 'www.sse.com.cn', 'star.sse.com.cn', 'big5.sse.com.cn', 'static.sse.com.cn'],
+        'preferred_strategies': ['jina', 'opencli_browser', 'playwright'],
+        'cleanup_profile': 'generic',
     },
     'meowvps': {
         'name': 'MeowVPS',
@@ -125,6 +149,48 @@ PLATFORMS = {
     'reddit': {
         'name': 'Reddit',
         'domains': ['reddit.com', 'www.reddit.com', 'old.reddit.com'],
+        'preferred_strategies': ['jina', 'opencli_browser', 'playwright'],
+        'cleanup_profile': 'generic',
+    },
+    'reuters': {
+        'name': 'Reuters',
+        'domains': ['reuters.com', 'www.reuters.com'],
+        'preferred_strategies': ['opencli_browser', 'jina', 'playwright', 'firecrawl'],
+        'cleanup_profile': 'generic',
+    },
+    'hkexnews': {
+        'name': 'HKEXnews',
+        'domains': ['hkexnews.hk', 'www.hkexnews.hk', 'www1.hkexnews.hk', 'www2.hkexnews.hk'],
+        'preferred_strategies': ['jina', 'opencli_browser', 'playwright'],
+        'cleanup_profile': 'generic',
+    },
+    'sec': {
+        'name': 'SEC EDGAR',
+        'domains': ['sec.gov', 'www.sec.gov'],
+        'preferred_strategies': ['jina', 'opencli_browser', 'playwright'],
+        'cleanup_profile': 'generic',
+    },
+    'cls': {
+        'name': '财联社',
+        'domains': ['cls.cn', 'www.cls.cn'],
+        'preferred_strategies': ['jina', 'opencli_browser', 'playwright'],
+        'cleanup_profile': 'generic',
+    },
+    'eastmoney': {
+        'name': '东方财富',
+        'domains': ['finance.eastmoney.com', 'eastmoney.com', 'biz.eastmoney.com'],
+        'preferred_strategies': ['jina', 'opencli_browser', 'playwright'],
+        'cleanup_profile': 'generic',
+    },
+    'sinafinance': {
+        'name': '新浪财经',
+        'domains': ['finance.sina.com.cn'],
+        'preferred_strategies': ['jina', 'opencli_browser', 'playwright'],
+        'cleanup_profile': 'generic',
+    },
+    'wallstreetcn': {
+        'name': '华尔街见闻',
+        'domains': ['wallstreetcn.com'],
         'preferred_strategies': ['jina', 'opencli_browser', 'playwright'],
         'cleanup_profile': 'generic',
     },

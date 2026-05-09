@@ -22,7 +22,7 @@ class OpenCLIBrowserStrategy(FetchStrategy):
 
         tab_id = ""
         try:
-            opened = self._run_json([opencli_cmd, "browser", "open", url])
+            opened = self._run_json([opencli_cmd, "browser", "tab", "new", url])
             tab_id = str(opened.get("page", "")).strip()
             if not tab_id:
                 return {"success": False, "error": "opencli 未返回页面标识"}
@@ -32,13 +32,21 @@ class OpenCLIBrowserStrategy(FetchStrategy):
             if not content:
                 return {"success": False, "error": "opencli 提取内容过短"}
 
+            title = str(extract.get("title", "")).strip()
+            source_url = str(extract.get("url", url)).strip() or url
+            wrapped_content = (
+                f"Title: {title}\n\n"
+                f"URL Source: {source_url}\n\n"
+                f"Markdown Content:\n{content}"
+            )
+
             return {
                 "success": True,
                 "strategy": self.name,
-                "content": content,
+                "content": wrapped_content,
                 "metadata": {
-                    "title": str(extract.get("title", "")).strip(),
-                    "source_url": str(extract.get("url", url)).strip() or url,
+                    "title": title,
+                    "source_url": source_url,
                 },
             }
         except Exception as e:

@@ -8,7 +8,7 @@ from scripts.strategies.opencli_browser import OpenCLIBrowserStrategy
 class OpenCLIBrowserStrategyTests(unittest.TestCase):
     @patch("scripts.strategies.opencli_browser.shutil.which", return_value="opencli")
     @patch("scripts.strategies.opencli_browser.subprocess.run")
-    def test_fetch_uses_open_extract_and_returns_markdown_content(self, mock_run, _mock_which):
+    def test_fetch_uses_tab_new_extract_and_returns_markdown_content(self, mock_run, _mock_which):
         open_result = MagicMock()
         open_result.returncode = 0
         open_result.stdout = json.dumps({"url": "https://www.zhihu.com/question/10434775822", "page": "TAB123"})
@@ -36,6 +36,7 @@ class OpenCLIBrowserStrategyTests(unittest.TestCase):
         self.assertTrue(result["success"])
         self.assertEqual(result["strategy"], "OpenCLI Browser")
         self.assertIn("claude怎么订阅最便宜？", result["content"])
+        self.assertEqual(mock_run.call_args_list[0].args[0][:4], ["opencli", "browser", "tab", "new"])
         self.assertEqual(mock_run.call_args_list[1].args[0][:4], ["opencli", "browser", "extract", "--tab"])
 
     @patch("scripts.strategies.opencli_browser.shutil.which", return_value="opencli")
