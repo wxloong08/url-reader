@@ -5,8 +5,8 @@
   "original_author": "ys (yhslgg-arch)",
   "author": "wxloong08",
   "created": "2026-01-29",
-  "updated": "2026-05-09",
-  "tags": ["url", "reader", "scraper", "wechat", "xiaohongshu", "toutiao", "douyin", "taobao", "jd", "x", "twitter", "reddit", "zhihu", "maimai", "nowcoder", "forum", "v2ex", "linuxdo", "nodeseek", "hostloc", "opencli", "finance", "news", "jobhunter", "cninfo", "sse", "hkexnews", "sec", "reuters", "cls", "eastmoney", "sinafinance", "wallstreetcn"],
+  "updated": "2026-05-10",
+  "tags": ["url", "reader", "scraper", "wechat", "xiaohongshu", "toutiao", "douyin", "taobao", "jd", "x", "twitter", "reddit", "zhihu", "maimai", "nowcoder", "forum", "v2ex", "linuxdo", "nodeseek", "hostloc", "opencli", "cloakbrowser", "finance", "news", "jobhunter", "cninfo", "sse", "hkexnews", "sec", "reuters", "cls", "eastmoney", "sinafinance", "wallstreetcn"],
   "platforms": [
     "微信公众号",
     "小红书",

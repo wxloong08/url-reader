@@ -13,6 +13,7 @@ from scripts import config
 from scripts.platforms import identify_platform
 from scripts.strategies.firecrawl import FirecrawlStrategy
 from scripts.strategies.jina import JinaStrategy
+from scripts.strategies.cloakbrowser_strategy import CloakBrowserStrategy
 from scripts.strategies.opencli_browser import OpenCLIBrowserStrategy
 from scripts.strategies.playwright_strategy import PlaywrightStrategy
 from scripts.content import extract_forum_replies_page, postprocess_content
@@ -22,6 +23,7 @@ from scripts.saver import save
 # strategy registry
 _STRATEGIES = {
     'firecrawl': FirecrawlStrategy(),
+    'cloakbrowser': CloakBrowserStrategy(),
     'jina': JinaStrategy(),
     'opencli_browser': OpenCLIBrowserStrategy(),
     'playwright': PlaywrightStrategy(),
@@ -37,6 +39,15 @@ def _filter_available_strategies(strategy_keys: list[str]) -> list[str]:
                 continue
             try:
                 import firecrawl  # noqa: F401
+            except ImportError:
+                continue
+        if key == 'cloakbrowser':
+            if not config.CLOAKBROWSER_ENABLED:
+                continue
+            if not config.CLOAKBROWSER_BINARY_PATH or not config.CLOAKBROWSER_BINARY_PATH.exists():
+                continue
+            try:
+                import cloakbrowser  # noqa: F401
             except ImportError:
                 continue
         available.append(key)
@@ -216,8 +227,8 @@ def main():
         print("  python -m scripts.main <url> --save       # 读取并保存")
         print("\n示例:")
         print("  python -m scripts.main https://mp.weixin.qq.com/s/xxxxx --save")
-        print("\n策略优先级: Firecrawl → OpenCLI → Jina → Playwright")
-        print("  (未配置 API Key 或未安装依赖时自动跳过)")
+        print("\n策略优先级: 按平台配置自动尝试")
+        print("  (可选增强: CloakBrowser；未启用或依赖缺失时自动跳过)")
         return
 
     url = sys.argv[1]

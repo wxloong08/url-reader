@@ -6,3 +6,6 @@ python-dotenv>=1.0
 
 # Optional: browser automation
 # playwright>=1.40
+
+# Optional: stealth browser fallback
+# cloakbrowser>=0.3

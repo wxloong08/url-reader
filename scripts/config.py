@@ -31,6 +31,9 @@ _DEFAULTS = {
     "timeout": 30,
     "headless": True,
     "forum_max_pages": 8,
+    "cloakbrowser_enabled": False,
+    "cloakbrowser_binary_path": "",
+    "cloakbrowser_backend": "playwright",
     "wechat_auth_file": str(DATA_DIR / "wechat_auth.json"),
 }
 
@@ -56,6 +59,9 @@ _ENV_MAP = {
     "timeout": "URL_READER_TIMEOUT",
     "headless": "URL_READER_HEADLESS",
     "forum_max_pages": "URL_READER_FORUM_MAX_PAGES",
+    "cloakbrowser_enabled": "URL_READER_CLOAKBROWSER_ENABLED",
+    "cloakbrowser_binary_path": "CLOAKBROWSER_BINARY_PATH",
+    "cloakbrowser_backend": "CLOAKBROWSER_BACKEND",
 }
 
 
@@ -93,4 +99,7 @@ OUTPUT_DIR: str = get("output_dir")
 TIMEOUT: int = get("timeout")
 HEADLESS: bool = get("headless")
 FORUM_MAX_PAGES: int = get("forum_max_pages")
+CLOAKBROWSER_ENABLED: bool = get("cloakbrowser_enabled")
+CLOAKBROWSER_BINARY_PATH: Path | None = Path(get("cloakbrowser_binary_path")) if get("cloakbrowser_binary_path") else None
+CLOAKBROWSER_BACKEND: str = get("cloakbrowser_backend")
 WECHAT_AUTH_FILE: Path = Path(get("wechat_auth_file"))

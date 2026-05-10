@@ -1240,6 +1240,38 @@ def _pick_v2ex_title(markdown: str, metadata: dict) -> str:
     return _pick_title(markdown, metadata)
 
 
+def _pick_maimai_title(markdown: str, metadata: dict) -> str:
+    raw_title = metadata.get('jina_title', '').strip()
+    if raw_title and raw_title != '登录 / 注册':
+        return re.sub(r'脉脉$', '', raw_title).strip()
+
+    for raw_line in markdown.splitlines():
+        cleaned = _normalize_cninfo_line(_clean_inline_markdown(raw_line))
+        if not cleaned or cleaned in {'登录 / 注册', '好友'}:
+            continue
+        if re.fullmatch(r'\d{2,4}-\d{1,2}-\d{1,2}\s*·\s*.+', cleaned):
+            continue
+        return re.sub(r'脉脉$', '', cleaned).strip()
+    return 'untitled'
+
+
+def _pick_nowcoder_title(markdown: str, metadata: dict) -> str:
+    raw_title = metadata.get('jina_title', '').strip()
+    if raw_title and raw_title != '登录 / 注册':
+        return re.sub(r'_牛客网$', '', raw_title).strip()
+
+    for raw_line in markdown.splitlines():
+        cleaned = _normalize_cninfo_line(_clean_inline_markdown(raw_line))
+        if not cleaned or _is_nowcoder_discuss_noise(cleaned, ''):
+            continue
+        if _looks_like_nowcoder_section_heading(cleaned):
+            continue
+        if re.fullmatch(r'\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}', cleaned):
+            continue
+        return re.sub(r'_牛客网$', '', cleaned).strip()
+    return 'untitled'
+
+
 def _extract_x_post(markdown: str, metadata: dict) -> dict:
     title = _pick_x_title(markdown, metadata)
     author = _pick_x_author(metadata)
@@ -2537,8 +2569,7 @@ def _extract_wallstreetcn_article_page(markdown: str, metadata: dict) -> dict:
 
 
 def _extract_maimai_article_page(markdown: str, metadata: dict) -> dict:
-    title = _pick_title(markdown, metadata)
-    title = re.sub(r'脉脉$', '', title).strip()
+    title = _pick_maimai_title(markdown, metadata)
 
     author = ''
     publish_time = ''
@@ -2607,8 +2638,7 @@ def _extract_maimai_article_page(markdown: str, metadata: dict) -> dict:
 
 
 def _extract_nowcoder_discuss_page(markdown: str, metadata: dict) -> dict:
-    title = _pick_title(markdown, metadata)
-    title = re.sub(r'_牛客网$', '', title).strip()
+    title = _pick_nowcoder_title(markdown, metadata)
 
     body_lines: list[str] = []
     after_title = False
@@ -2633,7 +2663,7 @@ def _extract_nowcoder_discuss_page(markdown: str, metadata: dict) -> dict:
         if not after_title:
             continue
 
-        if raw_line.lstrip().startswith('#'):
+        if raw_line.lstrip().startswith('#') or _looks_like_nowcoder_section_heading(cleaned):
             if body_lines and body_lines[-1] != '':
                 body_lines.append('')
             body_lines.append(f'## {cleaned}')
@@ -3283,7 +3313,7 @@ def _is_wallstreetcn_article_tail(line: str) -> bool:
 def _is_maimai_article_noise(line: str, title: str) -> bool:
     if line == title:
         return True
-    if line in {'登录 / 注册', 'add-friend好友', '相关推荐', '评论'}:
+    if line in {'登录 / 注册', 'add-friend好友', '相关推荐', '评论', '好友'}:
         return True
     if line == f'{title}脉脉':
         return True
@@ -3315,11 +3345,15 @@ def _is_nowcoder_discuss_noise(line: str, title: str) -> bool:
         return True
     if line == '精华':
         return True
+    if line in {'首页', '题库', '面试', '简历', '求职', '学习', '竞赛', '搜索', '我要招人', '登录 / 注册', '关注', '已编辑'}:
+        return True
     return False
 
 
 def _is_nowcoder_discuss_tail(line: str) -> bool:
     if line.startswith('[#'):
+        return True
+    if line.startswith('## 面经##') or line.startswith('##校招##'):
         return True
     if line in {'提示', '订阅专刊', '浏览', '评论', '热门话题', '话题', '表情'}:
         return True
@@ -3330,6 +3364,14 @@ def _is_nowcoder_discuss_tail(line: str) -> bool:
     if line.startswith('共0张') or line.startswith('最近使用'):
         return True
     return False
+
+
+def _looks_like_nowcoder_section_heading(line: str) -> bool:
+    if line == '深信服一二面':
+        return True
+    if len(line) > 32:
+        return False
+    return bool(re.fullmatch(r'[A-Za-z0-9\u4e00-\u9fff·（）()_/\-+ ]+(?:一面|二面|三面|四面|五面|六面|七面|八面|九面|十面|交叉面|加面|HR面|hr面|笔试)', line))
 
 
 def _is_cninfo_heading_line(line: str) -> bool:

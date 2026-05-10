@@ -925,6 +925,64 @@ NOWCODER_DISCUSS_RAW = """# 分享一下秋招开始到现在的面经
 """
 
 
+MAIMAI_CLOAK_RAW = """Title: 背调之前必看，否则offer没了
+
+URL Source: https://maimai.cn/article/detail?efid=s09FQ3VV_2bsXT6nprfVew&fid=1882962497
+
+Markdown Content:
+
+登录 / 注册
+背调之前必看，否则offer没了
+宇叔求职陪跑
+25-07-31 · HRBP
+好友
+💣【TOP8背调翻车原因】
+
+1️⃣ 时间对不上（重灾区！）
+
+"把3个月空窗期合并到上家公司"
+
+END
+"""
+
+
+NOWCODER_CLOAK_RAW = """Title: 分享一下秋招开始到现在的面经
+
+URL Source: https://www.nowcoder.com/discuss/456499
+
+Markdown Content:
+
+首页
+题库
+面试
+登录 / 注册
+等了180天终于改名
+2021-07-09 17:37
+已编辑
+字节跳动_抖音_后台开发
+关注
+分享一下秋招开始到现在的面经
+精华
+10.15号Update
+正式结束秋招了
+TPLINK一面
+
+1.自我介绍
+
+2.项目相关
+
+3.介绍工厂方法模式
+
+阿里云一面
+
+1.上来面试官先自我介绍
+
+2.中断响应的处理过程和机制
+
+## 面经##校招##字节跳动
+"""
+
+
 class PlatformIdentificationTests(unittest.TestCase):
     def test_identify_x_urls_as_explicit_x_platform(self):
         for url in (
@@ -1051,11 +1109,18 @@ class PlatformIdentificationTests(unittest.TestCase):
         platform = identify_platform("https://maimai.cn/article/detail?efid=s09FQ3VV_2bsXT6nprfVew&fid=1882962497")
         self.assertEqual(platform["id"], "maimai")
         self.assertEqual(platform["name"], "脉脉")
+        self.assertEqual(platform["preferred_strategies"][:3], ["firecrawl", "cloakbrowser", "opencli_browser"])
 
     def test_identify_nowcoder_as_explicit_platform(self):
         platform = identify_platform("https://www.nowcoder.com/discuss/456499")
         self.assertEqual(platform["id"], "nowcoder")
         self.assertEqual(platform["name"], "牛客")
+        self.assertEqual(platform["preferred_strategies"][:3], ["firecrawl", "cloakbrowser", "opencli_browser"])
+
+    def test_identify_zhihu_prefers_cloakbrowser_before_opencli(self):
+        platform = identify_platform("https://www.zhihu.com/question/10434775822")
+        self.assertEqual(platform["id"], "zhihu")
+        self.assertEqual(platform["preferred_strategies"][:3], ["firecrawl", "cloakbrowser", "opencli_browser"])
 
 
 class ContentCleanupTests(unittest.TestCase):
@@ -1537,6 +1602,34 @@ Markdown Content:
         self.assertNotIn("点赞成功", result["content"])
         self.assertNotIn("邀请牛友回答", result["content"])
         self.assertNotIn("#26届春招投递记录", result["content"])
+
+    def test_maimai_cloakbrowser_output_keeps_real_title_and_author(self):
+        result = postprocess_content(
+            MAIMAI_CLOAK_RAW,
+            "https://maimai.cn/article/detail?efid=s09FQ3VV_2bsXT6nprfVew&fid=1882962497",
+            {"id": "maimai", "name": "脉脉", "preferred_strategies": ["cloakbrowser", "opencli_browser", "jina", "playwright"]},
+        )
+
+        self.assertTrue(result["success"])
+        self.assertIn("# 背调之前必看，否则offer没了", result["content"])
+        self.assertIn("**作者**: 宇叔求职陪跑", result["content"])
+        self.assertNotIn("# 登录 / 注册", result["content"])
+        self.assertNotIn("**作者**: 背调之前必看，否则offer没了", result["content"])
+        self.assertNotIn("好友", result["content"])
+
+    def test_nowcoder_cloakbrowser_output_treats_plaintext_sections_as_headings(self):
+        result = postprocess_content(
+            NOWCODER_CLOAK_RAW,
+            "https://www.nowcoder.com/discuss/456499",
+            {"id": "nowcoder", "name": "牛客", "preferred_strategies": ["cloakbrowser", "opencli_browser", "jina", "playwright"]},
+        )
+
+        self.assertTrue(result["success"])
+        self.assertIn("# 分享一下秋招开始到现在的面经", result["content"])
+        self.assertIn("## TPLINK一面", result["content"])
+        self.assertIn("## 阿里云一面", result["content"])
+        self.assertNotIn("# 首页", result["content"])
+        self.assertNotIn("登录 / 注册", result["content"])
 
 
 if __name__ == "__main__":

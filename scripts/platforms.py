@@ -53,19 +53,19 @@ PLATFORMS = {
     'zhihu': {
         'name': '知乎',
         'domains': ['zhihu.com', 'zhuanlan.zhihu.com'],
-        'preferred_strategies': ['firecrawl', 'opencli_browser', 'jina', 'playwright'],
+        'preferred_strategies': ['firecrawl', 'cloakbrowser', 'opencli_browser', 'jina', 'playwright'],
         'cleanup_profile': 'article_feed',
     },
     'maimai': {
         'name': '脉脉',
         'domains': ['maimai.cn', 'www.maimai.cn'],
-        'preferred_strategies': ['firecrawl', 'opencli_browser', 'jina', 'playwright'],
+        'preferred_strategies': ['firecrawl', 'cloakbrowser', 'opencli_browser', 'jina', 'playwright'],
         'cleanup_profile': 'generic',
     },
     'nowcoder': {
         'name': '牛客',
         'domains': ['nowcoder.com', 'www.nowcoder.com'],
-        'preferred_strategies': ['firecrawl', 'opencli_browser', 'jina', 'playwright'],
+        'preferred_strategies': ['firecrawl', 'cloakbrowser', 'opencli_browser', 'jina', 'playwright'],
         'cleanup_profile': 'generic',
     },
     'weibo': {

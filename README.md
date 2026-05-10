@@ -30,7 +30,7 @@ URL
 
 - 没有“全局固定策略顺序”。
 - 每个平台的策略顺序都定义在 [scripts/platforms.py](scripts/platforms.py)。
-- 某些策略在本机不可用时会失败回退，但只有 `firecrawl` 会在进入主循环前被预过滤。
+- 某些策略在本机不可用时会失败回退；当前 `firecrawl` 和 `cloakbrowser` 会在进入主循环前被预过滤。
 
 ## 当前策略
 
@@ -55,7 +55,14 @@ URL
 - 当前对 `知乎 question` 页特别有用
 - 需要本机安装 `opencli`
 
-### 4. Playwright
+### 4. CloakBrowser（可选）
+
+- 更强的无头浏览器 fallback，用于降低公开页面触发验证的概率
+- 当前只建议给高风控公开页启用，例如 `知乎 / 脉脉 / 牛客`
+- 需要你自己提供固定版本本地二进制
+- 默认关闭，不会自动下载、不依赖自动更新
+
+### 5. Playwright
 
 - 本地浏览器渲染兜底
 - 适合需要真实浏览器环境的站点
@@ -229,6 +236,21 @@ playwright install chromium
 npm install -g @jackwener/opencli
 ```
 
+如果你要用 CloakBrowser：
+
+```bash
+pip install cloakbrowser
+```
+
+然后显式启用并指定本地固定二进制：
+
+```bash
+URL_READER_CLOAKBROWSER_ENABLED=true
+CLOAKBROWSER_BINARY_PATH=D:/tools/cloakbrowser/chrome.exe
+CLOAKBROWSER_AUTO_UPDATE=false
+CLOAKBROWSER_SKIP_CHECKSUM=false
+```
+
 ## 配置
 
 配置优先级：
@@ -249,6 +271,9 @@ URL_READER_OUTPUT_DIR=D:/url-reader-output
 URL_READER_TIMEOUT=30
 URL_READER_HEADLESS=true
 URL_READER_FORUM_MAX_PAGES=8
+URL_READER_CLOAKBROWSER_ENABLED=false
+CLOAKBROWSER_BINARY_PATH=
+CLOAKBROWSER_BACKEND=playwright
 ```
 
 ### 支持的环境变量
@@ -261,6 +286,9 @@ URL_READER_FORUM_MAX_PAGES=8
 | `URL_READER_TIMEOUT` | 超时秒数 | `30` |
 | `URL_READER_HEADLESS` | Playwright 是否无头 | `true` |
 | `URL_READER_FORUM_MAX_PAGES` | 论坛分页补抓上限 | `8` |
+| `URL_READER_CLOAKBROWSER_ENABLED` | 是否启用 CloakBrowser | `false` |
+| `CLOAKBROWSER_BINARY_PATH` | CloakBrowser 本地固定二进制路径 | 空 |
+| `CLOAKBROWSER_BACKEND` | CloakBrowser backend | `playwright` |
 
 ### `config.json`
 

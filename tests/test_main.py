@@ -1,6 +1,9 @@
 import unittest
+from pathlib import Path
+from types import ModuleType
+from unittest.mock import patch
 
-from scripts.main import _prepare_content_for_postprocess
+from scripts.main import _filter_available_strategies, _prepare_content_for_postprocess
 
 
 class MainPreparationTests(unittest.TestCase):
@@ -26,6 +29,24 @@ class MainPreparationTests(unittest.TestCase):
         prepared = _prepare_content_for_postprocess(content, metadata, "https://example.com")
 
         self.assertEqual(prepared, content)
+
+    @patch("scripts.main.config.CLOAKBROWSER_ENABLED", False)
+    def test_filter_available_strategies_skips_cloakbrowser_when_disabled(self):
+        filtered = _filter_available_strategies(["cloakbrowser", "opencli_browser"])
+        self.assertEqual(filtered, ["opencli_browser"])
+
+    @patch.dict("sys.modules", {"cloakbrowser": ModuleType("cloakbrowser")})
+    @patch("scripts.main.config.CLOAKBROWSER_BINARY_PATH", Path(__file__))
+    @patch("scripts.main.config.CLOAKBROWSER_ENABLED", True)
+    def test_filter_available_strategies_keeps_cloakbrowser_when_enabled_and_binary_exists(self):
+        filtered = _filter_available_strategies(["cloakbrowser", "opencli_browser"])
+        self.assertEqual(filtered, ["cloakbrowser", "opencli_browser"])
+
+    @patch("scripts.main.config.CLOAKBROWSER_BINARY_PATH", None)
+    @patch("scripts.main.config.CLOAKBROWSER_ENABLED", True)
+    def test_filter_available_strategies_skips_cloakbrowser_when_binary_path_missing(self):
+        filtered = _filter_available_strategies(["cloakbrowser", "opencli_browser"])
+        self.assertEqual(filtered, ["opencli_browser"])
 
 
 if __name__ == "__main__":

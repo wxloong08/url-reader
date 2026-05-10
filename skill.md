@@ -57,7 +57,9 @@ python -m scripts.url_converter "https://mp.weixin.qq.com/s?__biz=xxx&mid=xxx&sn
      ↓
 ┌─────────────────────────────────────┐
 │           策略链                     │
-│  Firecrawl → OpenCLI → Jina → Playwright │
+│ Firecrawl → CloakBrowser → OpenCLI → Jina │
+│                  ↓                        │
+│              Playwright 兜底              │
 │  自动跳过不可用策略，按平台优先级尝试    │
 └─────────────────────────────────────┘
      ↓
@@ -86,7 +88,14 @@ python -m scripts.url_converter "https://mp.weixin.qq.com/s?__biz=xxx&mid=xxx&sn
 - 适合不需要登录的平台
 - 部分中文平台会返回 HTTP 451/503
 
-### 策略 4：Playwright 浏览器自动化
+### 策略 4：CloakBrowser（可选增强）
+
+- 更强的无头浏览器 fallback
+- 目标是降低公开页面触发验证的概率
+- 默认关闭，只有显式启用并提供固定本地二进制时才参与策略链
+- 当前建议只给 `知乎 / 脉脉 / 牛客` 这类高风控公开页启用
+
+### 策略 5：Playwright 浏览器自动化
 
 - 支持登录态保持（WeChat 等）
 - 移动端 User-Agent 模拟
@@ -104,9 +113,9 @@ python -m scripts.url_converter "https://mp.weixin.qq.com/s?__biz=xxx&mid=xxx&sn
 | 天猫 | tmall.com | Firecrawl → OpenCLI → Playwright → Jina |
 | 京东 | jd.com | Firecrawl → OpenCLI → Jina → Playwright |
 | 百度 | baidu.com | Firecrawl → OpenCLI → Jina → Playwright |
-| 知乎 | zhihu.com | Firecrawl → OpenCLI → Jina → Playwright |
-| 脉脉 | maimai.cn | Firecrawl → OpenCLI → Jina → Playwright |
-| 牛客 | nowcoder.com | Firecrawl → OpenCLI → Jina → Playwright |
+| 知乎 | zhihu.com | Firecrawl → CloakBrowser → OpenCLI → Jina → Playwright |
+| 脉脉 | maimai.cn | Firecrawl → CloakBrowser → OpenCLI → Jina → Playwright |
+| 牛客 | nowcoder.com | Firecrawl → CloakBrowser → OpenCLI → Jina → Playwright |
 | 微博 | weibo.com | Firecrawl → OpenCLI → Playwright → Jina |
 | X | x.com / twitter.com | Jina → OpenCLI → Playwright → Firecrawl |
 | B站 | bilibili.com | Firecrawl → OpenCLI → Jina → Playwright |
@@ -188,7 +197,10 @@ FIRECRAWL_API_KEY=fc-YOUR_KEY
 | `URL_READER_OUTPUT_DIR` | 保存目录 | `~/url-reader-output` |
 | `URL_READER_TIMEOUT` | HTTP 超时秒数 | 30 |
 | `URL_READER_HEADLESS` | Playwright 无头模式 | true |
+| `URL_READER_CLOAKBROWSER_ENABLED` | 是否启用 CloakBrowser | false |
 | `URL_READER_FORUM_MAX_PAGES` | 论坛帖子最多抓取页数 | 8 |
+| `CLOAKBROWSER_BINARY_PATH` | CloakBrowser 本地固定二进制路径 | (空) |
+| `CLOAKBROWSER_BACKEND` | CloakBrowser backend | playwright |
 
 ### config.json（次优先级）
 
@@ -260,6 +272,9 @@ pip install firecrawl-py requests
 # Playwright（可选，用于需要登录的平台）
 pip install playwright
 playwright install chromium
+
+# CloakBrowser（可选，用于高风控公开页）
+pip install cloakbrowser
 ```
 
 ## 常见问题
