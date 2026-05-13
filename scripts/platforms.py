@@ -98,6 +98,12 @@ PLATFORMS = {
         'preferred_strategies': ['firecrawl', 'opencli_browser', 'jina', 'playwright'],
         'cleanup_profile': 'article_feed',
     },
+    '10jqka': {
+        'name': '同花顺',
+        'domains': ['10jqka.com.cn', 'basic.10jqka.com.cn', 'stockpage.10jqka.com.cn', 'stock.10jqka.com.cn', 'yuanchuang.10jqka.com.cn'],
+        'preferred_strategies': ['playwright', 'opencli_browser', 'jina'],
+        'cleanup_profile': 'finance_stock',
+    },
     'cninfo': {
         'name': '巨潮资讯',
         'domains': ['cninfo.com.cn', 'www.cninfo.com.cn', 'static.cninfo.com.cn'],
@@ -178,21 +184,33 @@ PLATFORMS = {
     },
     'eastmoney': {
         'name': '东方财富',
-        'domains': ['finance.eastmoney.com', 'eastmoney.com', 'biz.eastmoney.com'],
-        'preferred_strategies': ['jina', 'opencli_browser', 'playwright'],
-        'cleanup_profile': 'generic',
+        'domains': ['eastmoney.com', 'finance.eastmoney.com', 'biz.eastmoney.com', 'emweb.securities.eastmoney.com', 'data.eastmoney.com', 'guba.eastmoney.com', 'quote.eastmoney.com', 'caifuhao.eastmoney.com'],
+        'preferred_strategies': ['playwright', 'jina', 'opencli_browser'],
+        'cleanup_profile': 'finance_stock',
     },
     'sinafinance': {
         'name': '新浪财经',
-        'domains': ['finance.sina.com.cn'],
+        'domains': ['finance.sina.com.cn', 'vip.stock.finance.sina.com.cn', 'money.finance.sina.com.cn', 'stock.finance.sina.com.cn', 'cj.sina.cn', 'finance.sina.cn'],
         'preferred_strategies': ['jina', 'opencli_browser', 'playwright'],
-        'cleanup_profile': 'generic',
+        'cleanup_profile': 'finance_stock',
     },
     'wallstreetcn': {
         'name': '华尔街见闻',
         'domains': ['wallstreetcn.com'],
         'preferred_strategies': ['jina', 'opencli_browser', 'playwright'],
         'cleanup_profile': 'generic',
+    },
+    'eniu': {
+        'name': '亿牛网',
+        'domains': ['eniu.com'],
+        'preferred_strategies': ['playwright', 'opencli_browser', 'jina'],
+        'cleanup_profile': 'finance_stock',
+    },
+    'xueqiu': {
+        'name': '雪球',
+        'domains': ['xueqiu.com', 'stockn.xueqiu.com'],
+        'preferred_strategies': ['playwright', 'jina', 'opencli_browser'],
+        'cleanup_profile': 'finance_stock',
     },
 }
 

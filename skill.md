@@ -1,6 +1,6 @@
 ---
 name: url-reader
-description: 智能读取任意URL内容，支持微信公众号、小红书等中国主流平台，自动保存Markdown和图片。
+description: 智能读取任意URL内容，支持内容站、论坛站、求职社区与财经个股数据页，自动保存Markdown和图片。
 ---
 
 # URL Reader - 智能网页内容读取器
@@ -116,6 +116,7 @@ python -m scripts.url_converter "https://mp.weixin.qq.com/s?__biz=xxx&mid=xxx&sn
 | 知乎 | zhihu.com | Firecrawl → CloakBrowser → OpenCLI → Jina → Playwright |
 | 脉脉 | maimai.cn | Firecrawl → CloakBrowser → OpenCLI → Jina → Playwright |
 | 牛客 | nowcoder.com | Firecrawl → CloakBrowser → OpenCLI → Jina → Playwright |
+| 同花顺 | 10jqka.com.cn | Playwright → OpenCLI → Jina |
 | 微博 | weibo.com | Firecrawl → OpenCLI → Playwright → Jina |
 | X | x.com / twitter.com | Jina → OpenCLI → Playwright → Firecrawl |
 | B站 | bilibili.com | Firecrawl → OpenCLI → Jina → Playwright |
@@ -126,9 +127,11 @@ python -m scripts.url_converter "https://mp.weixin.qq.com/s?__biz=xxx&mid=xxx&sn
 | SEC EDGAR | sec.gov | Jina → OpenCLI → Playwright |
 | Reuters | reuters.com | OpenCLI → Jina → Playwright → Firecrawl |
 | 财联社 | cls.cn | Jina → OpenCLI → Playwright |
-| 东方财富 | finance.eastmoney.com | Jina → OpenCLI → Playwright |
-| 新浪财经 | finance.sina.com.cn | Jina → OpenCLI → Playwright |
+| 东方财富 | eastmoney.com / data.eastmoney.com | Playwright → Jina → OpenCLI |
+| 新浪财经 | finance.sina.com.cn / vip.stock.finance.sina.com.cn | Jina → OpenCLI → Playwright |
 | 华尔街见闻 | wallstreetcn.com | Jina → OpenCLI → Playwright |
+| 亿牛网 | eniu.com | Playwright → OpenCLI → Jina |
+| 雪球 | xueqiu.com | Playwright → Jina → OpenCLI |
 | V2EX | v2ex.com | Jina → OpenCLI → Playwright |
 | MeowVPS | meowvps.com | Jina → OpenCLI → Playwright |
 | HostLoc | hostloc.com | Jina → OpenCLI → Playwright |
@@ -173,9 +176,12 @@ python -m scripts.url_converter "https://mp.weixin.qq.com/s?__biz=xxx&mid=xxx&sn
 - `SEC EDGAR`：公司 filings 列表页、filing index 页
 - `Reuters`：Markets 列表页、文章页
 - `财联社`：首页资讯流、detail 文章页
-- `东方财富`：财经首页资讯流、文章页
-- `新浪财经`：首页资讯流、文章页
+- `东方财富`：财经首页资讯流、文章页、个股数据页
+- `新浪财经`：首页资讯流、文章页、个股资料页
 - `华尔街见闻`：首页资讯流、文章页
+- `同花顺`：F10 财务页、财务指标/资产负债构成/报告区块
+- `亿牛网`：个股估值页、关键估值/财务快讯
+- `雪球`：已显式识别，优先走浏览器策略
 
 这些清洗会尽量保留投资调研所需的元信息，如标题、时间、来源、证券代码、公告编号、文档类型和正文，并去掉导航、行情挂件、评论区、推荐阅读、下载/登录引导等噪音。
 
@@ -248,6 +254,7 @@ url-reader/
 │   ├── main.py                 # 入口/编排器
 │   └── strategies/
 │       ├── __init__.py         # FetchStrategy 基类
+│       ├── cloakbrowser_strategy.py # CloakBrowser 策略
 │       ├── firecrawl.py        # Firecrawl 策略
 │       ├── jina.py             # Jina Reader 策略
 │       ├── opencli_browser.py  # OpenCLI Browser 策略
@@ -256,7 +263,10 @@ url-reader/
     ├── __init__.py
     ├── test_content.py         # 平台识别 + 清洗测试
     ├── test_formatter.py       # 格式化输出测试
-    └── test_opencli_strategy.py # OpenCLI 策略测试
+    ├── test_opencli_strategy.py # OpenCLI 策略测试
+    ├── test_cloakbrowser_strategy.py # CloakBrowser 策略测试
+    ├── test_playwright_strategy.py # Playwright 财经页测试
+    └── test_main.py            # 主流程准备/策略过滤测试
 ```
 
 ## 依赖安装
@@ -267,7 +277,10 @@ python -m venv .venv
 .venv\Scripts\activate
 
 # 核心依赖
-pip install firecrawl-py requests
+pip install requests python-dotenv
+
+# Firecrawl（可选）
+pip install firecrawl-py
 
 # Playwright（可选，用于需要登录的平台）
 pip install playwright
@@ -275,6 +288,12 @@ playwright install chromium
 
 # CloakBrowser（可选，用于高风控公开页）
 pip install cloakbrowser
+```
+
+## 测试
+
+```bash
+python -m unittest tests.test_main tests.test_opencli_strategy tests.test_cloakbrowser_strategy tests.test_content tests.test_formatter tests.test_playwright_strategy
 ```
 
 ## 常见问题

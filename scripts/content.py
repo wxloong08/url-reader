@@ -3,7 +3,10 @@ Content utilities: title extraction, image extraction, filename sanitization.
 Pure utility module with no internal imports.
 """
 
+import html
+import json
 import re
+import unicodedata
 from urllib.parse import urlparse
 
 _CLEANUP_RULES = {
@@ -312,6 +315,41 @@ _CLEANUP_RULES = {
             r'^[\s\W_]+$',
         ),
     },
+    'finance_stock': {
+        'window_start_markers': (),
+        'tail_markers': (
+            '相关推荐',
+            '热门评论',
+            '杜邦分析原理',
+            '招聘动态',
+            '全站热榜',
+            '创作者周榜',
+            '正在热议',
+        ),
+        'drop_exact': {
+            '首页', '登录', '注册', '分享', '收藏', '举报', '反馈', '行情', '股吧',
+            '新闻', '外汇', '新三板', '最新价： --', '涨跌幅： --',
+        },
+        'drop_prefixes': (
+            '新浪首页',
+            '财经首页',
+            '最近访问股',
+            '查看自选股请先',
+            'F10 功能找不到',
+            '谢谢您的支持',
+        ),
+        'drop_contains': (
+            '登录/注册',
+            '意见反馈',
+            '免责声明',
+            '扫码登录',
+            '版权所有',
+            '牛客科技©',
+        ),
+        'drop_regexes': (
+            r'^[\s\W_]+$',
+        ),
+    },
 }
 
 
@@ -387,6 +425,9 @@ def postprocess_content(content: str, url: str, platform: dict) -> dict:
 
     if _is_sinafinance_platform(platform, url):
         return _extract_sinafinance_content(markdown, metadata, url)
+
+    if _is_finance_stock_platform(platform, url):
+        return _extract_finance_stock_content(markdown, metadata, url, platform)
 
     if _is_wallstreetcn_platform(platform, url):
         return _extract_wallstreetcn_content(markdown, metadata, url)
@@ -534,6 +575,12 @@ def _is_maimai_platform(platform: dict, url: str) -> bool:
     if platform.get('id') == 'maimai':
         return True
     return 'maimai.cn' in urlparse(url).netloc.lower()
+
+
+def _is_finance_stock_platform(platform: dict, url: str) -> bool:
+    if platform.get('cleanup_profile') == 'finance_stock':
+        return platform.get('id') not in {'sinafinance', 'eastmoney'}
+    return False
 
 
 def _is_nowcoder_platform(platform: dict, url: str) -> bool:
@@ -1322,11 +1369,16 @@ def _extract_x_post(markdown: str, metadata: dict) -> dict:
 
 def _extract_zhihu_question_answers(markdown: str, metadata: dict) -> dict:
     title = _pick_zhihu_question_title(markdown, metadata)
-    answer_start = re.search(r'(?m)^####\s+\d+\s+个回答\s*$', markdown)
+    answer_start = re.search(r'(?m)^(?:####\s+)?\d+\s+个回答\s*$', markdown)
     if not answer_start:
         return {'success': False, 'error': '知乎问题回答区提取失败'}
 
     answer_block = markdown[answer_start.end():]
+    if not re.search(r'(?m)^\[([^\]]+)\]\((?:https?:)?//www\.zhihu\.com/people/[^)]+\)$', answer_block):
+        answers = _extract_zhihu_plaintext_answers(answer_block)
+        if answers:
+            return _format_zhihu_answers(title, answers, markdown, metadata)
+
     answers: list[dict[str, str]] = []
     current_author = ''
     current_lines: list[str] = []
@@ -1373,6 +1425,50 @@ def _extract_zhihu_question_answers(markdown: str, metadata: dict) -> dict:
     if not answers:
         return {'success': False, 'error': '未提取到知乎公开回答'}
 
+    return _format_zhihu_answers(title, answers, markdown, metadata)
+
+
+def _extract_zhihu_plaintext_answers(answer_block: str) -> list[dict[str, str]]:
+    lines = answer_block.splitlines()
+    answers: list[dict[str, str]] = []
+    current_author = ''
+    current_lines: list[str] = []
+
+    def flush_answer() -> None:
+        nonlocal current_author, current_lines
+        if not current_author:
+            current_lines = []
+            return
+        body = _clean_zhihu_answer_body(current_lines)
+        if body:
+            answers.append({'author': current_author, 'body': body})
+        current_author = ''
+        current_lines = []
+
+    for index, raw_line in enumerate(lines):
+        line = _normalize_invisible_whitespace(raw_line).strip()
+        if not line:
+            if current_lines and current_lines[-1] != '':
+                current_lines.append('')
+            continue
+        if _is_zhihu_answer_tail(line):
+            break
+
+        if _looks_like_zhihu_plaintext_author(lines, index):
+            flush_answer()
+            current_author = line
+            continue
+
+        if not current_author:
+            continue
+
+        current_lines.append(raw_line)
+
+    flush_answer()
+    return answers
+
+
+def _format_zhihu_answers(title: str, answers: list[dict[str, str]], markdown: str, metadata: dict) -> dict:
     parts = [f'# {title}', '', '## 回答', '']
     for index, answer in enumerate(answers, 1):
         parts.append(f'{index}. {answer["author"]}')
@@ -1483,12 +1579,16 @@ def _extract_cls_content(markdown: str, metadata: dict, url: str) -> dict:
 
 
 def _extract_eastmoney_content(markdown: str, metadata: dict, url: str) -> dict:
+    if _is_eastmoney_stock_page(url, markdown):
+        return _extract_finance_stock_content(markdown, metadata, url, {'id': 'eastmoney', 'name': '东方财富', 'cleanup_profile': 'finance_stock'})
     if _is_eastmoney_article_page(url, markdown):
         return _extract_eastmoney_article_page(markdown, metadata)
     return _extract_eastmoney_home_page(markdown, metadata)
 
 
 def _extract_sinafinance_content(markdown: str, metadata: dict, url: str) -> dict:
+    if _is_sinafinance_stock_page(url, markdown):
+        return _extract_finance_stock_content(markdown, metadata, url, {'id': 'sinafinance', 'name': '新浪财经', 'cleanup_profile': 'finance_stock'})
     if _is_sinafinance_article_page(url, markdown):
         return _extract_sinafinance_article_page(markdown, metadata)
     return _extract_sinafinance_home_page(markdown, metadata)
@@ -1579,6 +1679,15 @@ def _pick_hkexnews_title(markdown: str, metadata: dict) -> str:
     if raw_title and raw_title != 'Listed Company Information Title Search':
         return raw_title
     return _pick_title(markdown, metadata)
+
+
+def _pick_finance_stock_title(markdown: str, metadata: dict) -> str:
+    raw_title = metadata.get('jina_title', '').strip() or _pick_title(markdown, metadata)
+    raw_title = re.sub(r'\|.*新浪财经.*$', '', raw_title).strip()
+    raw_title = re.sub(r'\s*[—-]\s*东方财富网$', '', raw_title).strip()
+    raw_title = re.sub(r'_F10_同花顺金融服务网$', '', raw_title).strip()
+    raw_title = re.sub(r'\s+[—-]\s+东方财富网$', '', raw_title).strip()
+    return raw_title or '财经个股页'
 
 
 def _pick_x_author(metadata: dict) -> str:
@@ -2437,11 +2546,17 @@ def _extract_sinafinance_article_page(markdown: str, metadata: dict) -> dict:
         if not publish_time and re.fullmatch(r'\d{4}年\d{2}月\d{2}日\s+\d{2}:\d{2}(?:\s+\S+)?', line):
             publish_time = line
             continue
+        if not publish_time:
+            embedded = re.match(r'(?P<time>\d{4}年\d{2}月\d{2}日\s+\d{2}:\d{2})\[(?P<source>[^\]]+)\]\([^)]+\)', line)
+            if embedded:
+                publish_time = embedded.group('time').strip()
+                source = embedded.group('source').strip()
+                continue
         if not source and line.startswith('来源：'):
             source = line.split('：', 1)[1].strip()
             continue
 
-        if not in_body and ('讯，' in line or line.startswith('编者按：')):
+        if not in_body and ('讯，' in line or line.startswith('编者按：') or re.match(r'^\d{4}年\d{1,2}月\d{1,2}日', line)):
             in_body = True
 
         if in_body:
@@ -2643,16 +2758,30 @@ def _extract_nowcoder_discuss_page(markdown: str, metadata: dict) -> dict:
     body_lines: list[str] = []
     after_title = False
 
-    for raw_line in markdown.splitlines():
+    source_lines = markdown.splitlines()
+    for index, raw_line in enumerate(source_lines):
         line = raw_line.strip()
         if not line:
             if after_title and body_lines and body_lines[-1] != '':
                 body_lines.append('')
             continue
+        cleaned = _normalize_cninfo_line(_clean_inline_markdown(line))
+        if _looks_like_nowcoder_related_card_start(source_lines, index):
+            while body_lines and body_lines[-1] == '':
+                body_lines.pop()
+            break
+        if _looks_like_nowcoder_tag_tail(cleaned):
+            while body_lines and body_lines[-1] == '':
+                body_lines.pop()
+            break
+        if _looks_like_nowcoder_topic_metric(cleaned):
+            while body_lines and body_lines[-1] == '':
+                body_lines.pop()
+            if body_lines and not body_lines[-1].startswith('## '):
+                body_lines.pop()
+            break
         if _is_nowcoder_discuss_tail(line):
             break
-
-        cleaned = _normalize_cninfo_line(_clean_inline_markdown(line))
         if not cleaned:
             continue
         if cleaned == title:
@@ -2690,17 +2819,129 @@ def _extract_nowcoder_discuss_page(markdown: str, metadata: dict) -> dict:
     }
 
 
+def _extract_finance_stock_content(markdown: str, metadata: dict, url: str, platform: dict) -> dict:
+    title = _pick_finance_stock_title(markdown, metadata)
+    sections: dict[str, list[str]] = {}
+    current_section = '公司资料'
+
+    def ensure_section(name: str) -> None:
+        nonlocal current_section
+        current_section = name
+        sections.setdefault(name, [])
+
+    def append_to_section(name: str, value: str) -> None:
+        ensure_section(name)
+        if value and value not in sections[name]:
+            sections[name].append(value)
+
+    ensure_section(current_section)
+
+    source_lines = markdown.splitlines()
+    index = 0
+    while index < len(source_lines):
+        raw_line = source_lines[index]
+        stripped = raw_line.strip()
+
+        if stripped.startswith(('<table', '<thead', '<tbody', '<tr', '<th', '<td')):
+            html_block: list[str] = []
+            while index < len(source_lines):
+                html_line = source_lines[index].strip()
+                if not html_line:
+                    break
+                if not html_line.startswith(('<table', '<thead', '<tbody', '<tr', '<th', '<td', '</table', '</thead', '</tbody', '</tr', '</th', '</td')):
+                    break
+                html_block.append(html_line)
+                index += 1
+                if '</table>' in html_line:
+                    break
+            table = _convert_html_table_to_markdown('\n'.join(html_block))
+            if table:
+                append_to_section(current_section, table)
+            continue
+
+        if stripped.startswith('|'):
+            block: list[str] = []
+            while index < len(source_lines) and source_lines[index].strip().startswith('|'):
+                block.append(_normalize_finance_table_line(source_lines[index].strip()))
+                index += 1
+            table = _clean_finance_markdown_table(block)
+            if table:
+                append_to_section(current_section, table)
+            continue
+
+        cleaned = _normalize_cninfo_line(_clean_inline_markdown(raw_line))
+        if not cleaned:
+            index += 1
+            continue
+
+        if _is_finance_stock_tail(cleaned):
+            break
+        if _is_finance_stock_noise(cleaned, title):
+            index += 1
+            continue
+
+        if stripped.startswith('{"title":') and '"report"' in stripped:
+            table = _convert_10jqka_finance_json_to_markdown(stripped)
+            if table:
+                append_to_section('财务指标', table)
+            index += 1
+            continue
+
+        heading = _normalize_finance_stock_heading(cleaned)
+        if heading and cleaned != title:
+            ensure_section(heading)
+            index += 1
+            continue
+
+        if _is_finance_stock_key_line(cleaned):
+            append_to_section(current_section, cleaned)
+        index += 1
+
+    parts = [f'# {title}']
+    if metadata.get('published_time'):
+        parts.append(f'**发布时间**: {metadata["published_time"]}')
+    if url:
+        parts.append(f'**来源页面**: {url}')
+
+    for section_name, values in sections.items():
+        cleaned_values = [value for value in values if value]
+        if not cleaned_values:
+            continue
+        parts.extend(['', f'## {section_name}', ''])
+        for value in cleaned_values:
+            if value.startswith('|'):
+                parts.append(value)
+            else:
+                parts.append(f'- {value}')
+
+    cleaned = '\n'.join(parts).strip()
+    if len(cleaned) < 80:
+        return {'success': False, 'error': '财经个股页提取失败'}
+
+    return {
+        'success': True,
+        'content': cleaned,
+        'metadata': {
+            **metadata,
+            'title': title,
+            'content_type': 'finance_stock',
+            'cleanup_chars_before': len(markdown.strip()),
+            'cleanup_chars_after': len(cleaned),
+        },
+    }
+
+
 def _clean_zhihu_answer_body(lines: list[str]) -> str:
     kept: list[str] = []
     for raw_line in lines:
-        line = raw_line.strip()
+        line = _normalize_invisible_whitespace(raw_line).strip()
         if not line:
             if kept and kept[-1] != '':
                 kept.append('')
             continue
         if _is_zhihu_answer_noise(line):
             continue
-        cleaned = _clean_inline_markdown(line)
+        cleaned = _normalize_zhihu_plaintext_text(_clean_inline_markdown(line))
         if cleaned:
             kept.append(cleaned)
 
@@ -2718,10 +2959,12 @@ def _clean_zhihu_answer_body(lines: list[str]) -> str:
             trimmed.append(line)
         kept = trimmed
 
+    kept = _merge_fragmented_zhihu_lines(kept)
     return _join_paragraphs(kept)
 
 
 def _normalize_cninfo_line(text: str) -> str:
+    text = _normalize_invisible_whitespace(text)
     text = re.sub(r'\s+', ' ', text).strip()
     text = re.sub(r'：\s+', '：', text)
     text = re.sub(r'\s+：', '：', text)
@@ -2806,6 +3049,7 @@ def _clean_vanilla_body(text: str) -> str:
 
 
 def _clean_inline_markdown(text: str) -> str:
+    text = _normalize_invisible_whitespace(text)
     text = re.sub(r'!\[.*?\]\([^)]+\)', '', text)
     text = re.sub(r'\[\]\([^)]+\)', '', text)
     text = re.sub(r'\[([^\]]+)\]\([^)]+\)', r'\1', text)
@@ -2819,6 +3063,16 @@ def _clean_inline_markdown(text: str) -> str:
     text = re.sub(r'(?<!\w)_(.+?)_(?!\w)', r'\1', text)
     text = re.sub(r'\s+', ' ', text)
     return text.strip(' -·|')
+
+
+def _normalize_invisible_whitespace(text: str) -> str:
+    return (
+        text.replace('\u200b', '')
+        .replace('\ufeff', '')
+        .replace('\u200e', '')
+        .replace('\u200f', '')
+        .replace('\xa0', ' ')
+    )
 
 
 def _normalize_link_wrapped_image(line: str) -> str:
@@ -2911,6 +3165,196 @@ def _looks_like_zhihu_bio_line(first_line: str, second_line: str) -> bool:
     return False
 
 
+def _merge_fragmented_zhihu_lines(lines: list[str]) -> list[str]:
+    merged: list[str] = []
+    fragments: list[str] = []
+
+    def flush_fragments() -> None:
+        nonlocal fragments
+        if not fragments:
+            return
+        if len(fragments) >= 4:
+            merged.append(''.join(fragments))
+        else:
+            merged.extend(fragments)
+        fragments = []
+
+    for line in lines:
+        if not line:
+            flush_fragments()
+            if merged and merged[-1] != '':
+                merged.append('')
+            continue
+
+        if _looks_like_zhihu_fragment_line(line):
+            fragments.append(line)
+            continue
+
+        flush_fragments()
+        merged.append(line)
+
+    flush_fragments()
+    return merged
+
+
+def _normalize_zhihu_plaintext_text(text: str) -> str:
+    normalized: list[str] = []
+    for ch in text:
+        if ch == '∗':
+            normalized.append('*')
+            continue
+        try:
+            name = unicodedata.name(ch)
+        except ValueError:
+            normalized.append(ch)
+            continue
+        if 'MATHEMATICAL' in name:
+            normalized.append(unicodedata.normalize('NFKC', ch))
+        else:
+            normalized.append(ch)
+    return ''.join(normalized)
+
+
+def _normalize_finance_table_line(line: str) -> str:
+    return re.sub(r'\s+', ' ', line).replace(' |', ' |').strip()
+
+
+def _clean_finance_markdown_table(lines: list[str]) -> str:
+    if len(lines) < 2:
+        return ''
+    compact = '\n'.join(lines).strip()
+    if compact.count('|') < 4:
+        return ''
+    if any(token in compact for token in ('用户名：', '密码：', '登录帮助', '新用户注册', '记录登录状态')):
+        return ''
+    if not any(re.search(r'\d', line) for line in lines[1:]):
+        return ''
+    return compact
+
+
+def _convert_html_table_to_markdown(raw_html: str) -> str:
+    rows = re.findall(r'<tr[^>]*>(.*?)</tr>', raw_html, flags=re.S | re.I)
+    parsed_rows: list[list[str]] = []
+    for row_html in rows:
+        cells = re.findall(r'<t[hd][^>]*>(.*?)</t[hd]>', row_html, flags=re.S | re.I)
+        cleaned_cells = [_clean_html_cell(cell) for cell in cells]
+        cleaned_cells = [cell for cell in cleaned_cells if cell]
+        if cleaned_cells:
+            parsed_rows.append(cleaned_cells)
+
+    if len(parsed_rows) < 2:
+        return ''
+
+    width = max(len(row) for row in parsed_rows)
+    normalized_rows = [row + [''] * (width - len(row)) for row in parsed_rows]
+    header = normalized_rows[0]
+    lines = ['| ' + ' | '.join(header) + ' |', '| ' + ' | '.join(['---'] * width) + ' |']
+    for row in normalized_rows[1:]:
+        lines.append('| ' + ' | '.join(row) + ' |')
+    return '\n'.join(lines)
+
+
+def _clean_html_cell(cell: str) -> str:
+    text = re.sub(r'<[^>]+>', ' ', cell)
+    text = html.unescape(text)
+    return _normalize_cninfo_line(text)
+
+
+def _convert_10jqka_finance_json_to_markdown(raw: str) -> str:
+    try:
+        payload = json.loads(raw)
+    except json.JSONDecodeError:
+        return ''
+
+    titles = payload.get('title') or []
+    reports = payload.get('report') or []
+    if not titles or len(titles) < 2 or not reports:
+        return ''
+
+    dates = reports[0][:5]
+    if not dates:
+        return ''
+
+    rows = ['| 科目 | ' + ' | '.join(dates) + ' |', '| --- | ' + ' | '.join(['---'] * len(dates)) + ' |']
+    for metric_index, metric in enumerate(titles[1:], start=1):
+        if metric_index >= len(reports):
+            break
+        metric_name = metric[0] if isinstance(metric, list) and metric else str(metric)
+        values = reports[metric_index][:len(dates)]
+        rows.append('| ' + ' | '.join([metric_name, *values]) + ' |')
+    return '\n'.join(rows)
+
+
+def _normalize_finance_stock_heading(line: str) -> str:
+    if line.startswith('公司简介—') or line == '公司资料':
+        return '公司资料'
+    if line in {'财务指标', '资产负债构成', '财务报告查看', '指标变动说明', '财务报告', '融资融券'}:
+        return line
+    if '核心题材' in line:
+        return '核心题材'
+    return ''
+
+
+def _is_finance_stock_key_line(line: str) -> bool:
+    if line.startswith('要点'):
+        return True
+    prefixes = (
+        '公司名称：', '公司英文名称：', '上市市场：', '上市日期：', '成立日期：',
+        '机构类型：', '董事会秘书：', '董秘电话：', '董秘传真：', '公司电子邮箱：',
+        '董秘电子邮箱：', '公司网址：', '主营业务：', '公司简介：', '注册地址：',
+        '办公地址：', '注册资本：', '证券简称更名历史：', '经营范围', '所属行业',
+        '所属板块', '行业背景', '战略落地', '模式转型', '管理效率',
+    )
+    if any(line.startswith(prefix) for prefix in prefixes):
+        return True
+    finance_tokens = ('ROE', 'PE', 'PB', '资产负债率', '净利润', '营业总收入', '每股收益', '融资', '融券', '负债', '现金流')
+    return any(token in line for token in finance_tokens)
+
+
+def _is_finance_stock_noise(line: str, title: str) -> bool:
+    if line == title:
+        return True
+    lowered = line.lower()
+    if line in {'首页', '登录', '注册', '分享', '收藏', '行情', '股吧', '新闻', '外汇', '新三板', '更多'}:
+        return True
+    if line.startswith('最新价：') or line.startswith('涨跌幅：'):
+        return True
+    if line.startswith('谢谢您的支持') or line.startswith('F10 功能找不到'):
+        return True
+    if line.startswith('特色龙虎榜单') or line.startswith('排名简称总市值'):
+        return True
+    if line.startswith('上一组') or line.startswith('下一组'):
+        return True
+    if '新浪首页' in line or '财经首页' in line:
+        return True
+    if '登录/注册' in line or '登录 / 注册' in line:
+        return True
+    if line.startswith('查看自选股请先') or line.startswith('最近访问股'):
+        return True
+    if re.fullmatch(r'\d+', line):
+        return True
+    if re.fullmatch(r'[\s\W_]+', line):
+        return True
+    if lowered.startswith('http://') or lowered.startswith('https://'):
+        return True
+    return False
+
+
+def _is_finance_stock_tail(line: str) -> bool:
+    return line in {'杜邦分析原理', '相关推荐', '招聘动态', '全站热榜', '创作者周榜', '正在热议'}
+
+
+def _looks_like_zhihu_fragment_line(line: str) -> bool:
+    compact = _normalize_invisible_whitespace(line).strip()
+    if not compact or len(compact) > 2:
+        return False
+    if re.search(r'https?://|www\.', compact):
+        return False
+    if re.fullmatch(r'\d+[.)]?', compact):
+        return False
+    return True
+
+
 def _is_cninfo_notice_list(url: str, markdown: str) -> bool:
     lowered_url = url.lower()
     if 'disclosure/list/notice' in lowered_url:
@@ -2983,11 +3427,28 @@ def _is_cls_detail_page(url: str, markdown: str) -> bool:
     return '财联社 ' in markdown and '我要评论' in markdown
 
 
+def _is_eastmoney_stock_page(url: str, markdown: str) -> bool:
+    lowered_url = url.lower()
+    domain = urlparse(url).netloc.lower()
+    if '/stockdata/' in lowered_url:
+        return True
+    if domain in {'data.eastmoney.com', 'quote.eastmoney.com', 'emweb.securities.eastmoney.com'}:
+        return True
+    return '核心题材' in markdown or '要点1：**所属板块**' in markdown
+
+
 def _is_eastmoney_article_page(url: str, markdown: str) -> bool:
     lowered_url = url.lower()
     if re.search(r'/a/\d+\.html', lowered_url):
         return True
     return '来源：' in markdown and ('相关阅读' in markdown or '责任编辑' in markdown)
+
+
+def _is_sinafinance_stock_page(url: str, markdown: str) -> bool:
+    lowered_url = url.lower()
+    if any(token in lowered_url for token in ('/corp/', '/stockid/', '/vfd_', '/vci_')):
+        return True
+    return '公司名称：' in markdown and '主营业务：' in markdown
 
 
 def _is_sinafinance_article_page(url: str, markdown: str) -> bool:
@@ -3082,6 +3543,10 @@ def _is_zhihu_answer_tail(line: str) -> bool:
     if line.startswith('下载知乎客户端'):
         return True
     if line.startswith('大家都在搜'):
+        return True
+    if line.startswith('添加评论'):
+        return True
+    if line.startswith('App内查看更多评论'):
         return True
     return False
 
@@ -3261,6 +3726,8 @@ def _is_sinafinance_article_noise(line: str, title: str) -> bool:
         return True
     if line.startswith('[新浪财经APP]'):
         return True
+    if '更多分享' in line or '分享到微博' in line or '分享到QQ' in line or '分享到QQ空间' in line:
+        return True
     return False
 
 
@@ -3268,6 +3735,14 @@ def _is_sinafinance_article_tail(line: str) -> bool:
     if line.startswith('责任编辑：'):
         return True
     if line.startswith('热门评论'):
+        return True
+    if line.startswith('相关新闻') or line.startswith('延伸阅读'):
+        return True
+    if line.startswith('海量资讯') or line.startswith('新浪财经声明'):
+        return True
+    if line.startswith('0 条评论') or line.startswith('VIP课程推荐') or line.startswith('APP专享直播'):
+        return True
+    if line.startswith('热门推荐') or line.startswith('股市直播') or line.startswith('最近访问'):
         return True
     if line.startswith('加载更多'):
         return True
@@ -3355,13 +3830,59 @@ def _is_nowcoder_discuss_tail(line: str) -> bool:
         return True
     if line.startswith('## 面经##') or line.startswith('##校招##'):
         return True
+    if line in {'相关推荐', '招聘动态', '全站热榜', '创作者周榜', '正在热议', '企业服务', '校企合作', '联系我们', '资源导航', '免责声明', '友情链接', '我是求职者', '我是招聘方'}:
+        return True
     if line in {'提示', '订阅专刊', '浏览', '评论', '热门话题', '话题', '表情'}:
         return True
     if line.startswith('点赞成功') or line.startswith('邀请牛友回答'):
         return True
     if line.startswith('送花成功') or line.startswith('畅所欲言吧'):
         return True
+    if line.startswith('牛客科技©') or line.startswith('每天登录，牛客都会送你一朵免费的花'):
+        return True
     if line.startswith('共0张') or line.startswith('最近使用'):
+        return True
+    return False
+
+
+def _looks_like_zhihu_plaintext_author(lines: list[str], index: int) -> bool:
+    line = _normalize_invisible_whitespace(lines[index]).strip()
+    if not line or len(line) > 24:
+        return False
+    if _is_zhihu_plaintext_scaffold(line):
+        return False
+    if re.search(r'[，。！？：:/]|https?://|www\.|vlink\.|公众号|答主|欢迎关注', line):
+        return False
+    if re.search(r'\d', line):
+        return False
+
+    following: list[str] = []
+    for next_line in lines[index + 1:]:
+        cleaned = _normalize_invisible_whitespace(next_line).strip()
+        if not cleaned:
+            continue
+        following.append(cleaned)
+        if len(following) == 3:
+            break
+
+    if not following:
+        return False
+    return '关注' in following
+
+
+def _is_zhihu_plaintext_scaffold(line: str) -> bool:
+    if line in {
+        '关注', '推荐', '热榜', '专栏', '圈子', 'New', '付费咨询', '知学堂', '直答',
+        '切换模式', '登录/注册', '登录 / 注册', '关注问题', '写回答', '邀请回答',
+        '好问题 3', '添加评论', '分享', '默认排序', 'AIGC', 'ChatGPT', 'claude',
+        'Cursor', 'POE ChatGPT',
+    }:
+        return True
+    if re.fullmatch(r'\d+\s+个回答', line):
+        return True
+    if re.fullmatch(r'\d+', line):
+        return True
+    if line.startswith('被浏览') or line.startswith('关注者'):
         return True
     return False
 
@@ -3372,6 +3893,36 @@ def _looks_like_nowcoder_section_heading(line: str) -> bool:
     if len(line) > 32:
         return False
     return bool(re.fullmatch(r'[A-Za-z0-9\u4e00-\u9fff·（）()_/\-+ ]+(?:一面|二面|三面|四面|五面|六面|七面|八面|九面|十面|交叉面|加面|HR面|hr面|笔试)', line))
+
+
+def _looks_like_nowcoder_topic_metric(line: str) -> bool:
+    return bool(re.fullmatch(r'\d{3,}\s*次浏览', line) or re.fullmatch(r'\d{2,}\s*人参与', line))
+
+
+def _looks_like_nowcoder_related_card_start(lines: list[str], index: int) -> bool:
+    line = _normalize_invisible_whitespace(lines[index]).strip()
+    if line != '分享':
+        return False
+
+    following: list[str] = []
+    for next_line in lines[index + 1:]:
+        cleaned = _normalize_invisible_whitespace(next_line).strip()
+        if not cleaned:
+            continue
+        following.append(cleaned)
+        if len(following) == 3:
+            break
+
+    if len(following) < 2:
+        return False
+    return bool(
+        re.fullmatch(r'\d{2}-\d{2}\s+\d{2}:\d{2}', following[1])
+        or re.search(r'(大学|学院|工程师|开发|产品|算法|测试|前端|后端)', following[-1])
+    )
+
+
+def _looks_like_nowcoder_tag_tail(line: str) -> bool:
+    return line.count('#') >= 2 and any(token in line for token in ('面经', '校招', '字节跳动', 'TP-LINK', '阿里云'))
 
 
 def _is_cninfo_heading_line(line: str) -> bool:
@@ -3443,6 +3994,16 @@ def _is_zhihu_answer_noise(line: str) -> bool:
     if re.fullmatch(r'\*\*\d[\d,]*\*\*', line):
         return True
     if line.startswith('创建时间：') or line.startswith('最后编辑：'):
+        return True
+    if line in {'关注', '阅读全文', '默认排序'}:
+        return True
+    if re.fullmatch(r'赞同\s*\d+', line):
+        return True
+    if re.fullmatch(r'\d+\s*条评论', line):
+        return True
+    if re.fullmatch(r'\d{1,6}', line):
+        return True
+    if line == '分享':
         return True
     if lowered.startswith('download zhihu app'):
         return True

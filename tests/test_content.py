@@ -979,7 +979,204 @@ TPLINK一面
 
 2.中断响应的处理过程和机制
 
-## 面经##校招##字节跳动
+相关推荐
+Echochenchen
+昨天 15:25
+华南师范大学 前端工程师
+影石前端日常实习（已oc）
+
+14
+56
+7
+分享
+徐新曜
+04-07 17:08
+广东工业大学 Java
+27届找后端开发，agent开发
+
+招聘动态
+查看更多
+这个offer值得去吗？
+38898次浏览
+250人参与
+
+机械人，说说你的烦心事
+147969次浏览
+1158人参与
+
+企业服务
+校企合作
+联系我们
+牛客科技©2026 All rights reserved admin@nowcoder.com
+每天登录，牛客都会送你一朵免费的花。
+"""
+
+
+ZHIHU_CLOAK_RAW = """Title: claude怎么订阅最便宜？
+
+URL Source: https://www.zhihu.com/question/10434775822
+
+Markdown Content:
+
+关注
+推荐
+热榜
+登录/注册
+claude怎么订阅最便宜？
+关注问题
+写回答
+51 个回答
+默认排序
+麻小辣
+美好如你，岁月如初。
+关注
+
+尼日利亚区的Claude订阅是全球最低价，我不允许还有人不知道这个信息差。
+
+首先需要注册一个尼日利亚Apple ID：
+
+阅读全文
+赞同 801
+66 条评论
+分享
+孤飞
+WEB3 会炼丹的白嫖区答主 vlink.cc/tosky
+关注
+
+开门见山——Claude Pro 在苹果尼日利亚区的订阅价只要 88 元人民币左右。
+
+起
+步
+的
+订
+阅
+，
+等
+于
+直
+接
+打
+了
+折
+。
+
+二、第一步：注册尼日利亚 Apple ID
+
+添加评论
+"""
+
+
+FINANCE_STOCK_10JQKA_RAW = """Title: 民生银行(600016) 财务概况_F10_同花顺金融服务网
+
+URL Source: https://basic.10jqka.com.cn/600016/finance.html
+
+Markdown Content:
+# 民生银行(600016) 财务概况_F10_同花顺金融服务网
+
+谢谢您的支持
+
+[同花顺F10](https://basic.10jqka.com.cn/600016/finance.html)
+
+最新价： --
+
+# 民生银行
+
+# 600016
+
+## 财务指标
+
+{"title":["科目\\\\时间",["净利润","元",0,false,true],["营业总收入","元",0,false,true],["ROE","",0,false,true]],"report":[["2026-03-31","2025-12-31"],["115.14亿","305.63亿"],["378.22亿","1428.65亿"],["1.65%","5.00%"]]}
+
+## 资产负债构成
+
+| 科目 | 金额 |
+| --- | --- |
+| 固定资产 | 477.16亿元 |
+| 资产总计 | 7.85万亿元 |
+
+### 杜邦分析原理
+
+解释性文字
+"""
+
+
+SINAFINANCE_STOCK_RAW = """Title: 民生银行(600016)公司资料_新浪财经_新浪网
+
+URL Source: https://vip.stock.finance.sina.com.cn/corp/go.php/vCI_CorpInfo/stockid/600016.phtml
+
+Published Time: Mon, 11 May 2026 07:17:23 GMT
+
+Markdown Content:
+[新浪财经](http://finance.sina.com.cn/)
+
+[新浪首页](http://www.sina.com.cn/)
+
+[上一组](javascript:;)
+
+公司简介—[民生银行(600016)](http://finance.sina.com.cn/realstock/company/sh600016/nc.shtml)
+
+公司名称：中国民生银行股份有限公司
+公司英文名称：China Minsheng Banking Corp.,Ltd.
+上市市场：上海证券交易所 上市日期：[2000-12-19](https://vip.stock.finance.sina.com.cn/corp/view/vCI_CorpInfoLink.php?stockid=600016&InMarketDate=200012)
+成立日期：[1996-02-07](https://vip.stock.finance.sina.com.cn/corp/view/vCI_CorpInfoLink.php?stockid=600016&EstablishDate=199602)注册资本：4378240万元(CNY)
+机构类型：股份制商业银行 组织形式：民营企业
+董事会秘书：李彬 公司电话：010-58560975
+主营业务：吸收社会公众存款、发放短期和中长期贷款、结算、办理票据贴现。
+公司简介：中国民生银行股份有限公司是经国务院批准设立的股份制商业银行。
+"""
+
+
+SINAFINANCE_NEWS_RAW = """Title: 民生银行(600016.SH)2024年净利润为322.96亿元、较去年同期下降9.85%|民生银行_新浪财经_新浪网
+
+URL Source: https://finance.sina.com.cn/jjxw/2025-03-31/doc-inerpcss8403475.shtml
+
+Published Time: 2025-03-31T09:59:23+08:00
+
+Markdown Content:
+经济新闻滚动 >正文
+
+# 民生银行(600016.SH)2024年净利润为322.96亿元、较去年同期下降9.85%
+
+民生银行(600016.SH)2024年净利润为322.96亿元、较去年同期下降9.85%
+
+2025年03月31日 09:48[界面新闻](https://m.jiemian.com/article/12544196_sina.html)
+
+[新浪财经APP](https://finance.sina.com.cn/mobile/comfinanceweb.shtml?source=cjzhengwen04)
+
+2025年3月29日，[民生银行](https://finance.sina.com.cn/realstock/company/sh600016/nc.shtml)(600016.SH)发布2024年年报。
+
+公司营业总收入为1362.90亿元，较去年同报告期营业总收入减少45.27亿元，同比下降3.21%。
+
+公司最新资产负债率为91.60%，公司最新ROE为5.02%，公司摊薄每股收益为0.64元。
+
+热门评论
+"""
+
+
+EASTMONEY_STOCK_RAW = """Title: 民生银行股票_数据_资料_信息 — 东方财富网
+
+URL Source: https://data.eastmoney.com/stockdata/600016.html
+
+Markdown Content:
+# 民生银行股票_数据_资料_信息 — 东方财富网
+
+*   [财经](https://finance.eastmoney.com/)
+*   [焦点](https://finance.eastmoney.com/yaowen.html)
+
+[民生银行核心题材](https://emweb.securities.eastmoney.com/pc_hsf10/pages/index.html?type=web&code=SH600016&color=b#/hxtc)
+
+要点1：**所属板块**银行 银行Ⅱ 股份制银行Ⅲ 北京板块
+
+要点2：**经营范围**吸收公众存款；发放短期、中期和长期贷款。
+
+要点3：**主营业务**本行经有关监管机构批准后，经营下列各项商业银行业务。
+
+| 交易时间 | 融资 | 融券 |
+| --- | --- | --- |
+| 2026-05-08 | 79.83亿 | 6.10 |
+| 2026-05-07 | 79.86亿 | 6.10 |
+
+相关推荐
 """
 
 
@@ -1121,6 +1318,46 @@ class PlatformIdentificationTests(unittest.TestCase):
         platform = identify_platform("https://www.zhihu.com/question/10434775822")
         self.assertEqual(platform["id"], "zhihu")
         self.assertEqual(platform["preferred_strategies"][:3], ["firecrawl", "cloakbrowser", "opencli_browser"])
+
+    def test_identify_10jqka_as_explicit_platform(self):
+        for url in (
+            "https://basic.10jqka.com.cn/600016/finance.html",
+            "https://stockpage.10jqka.com.cn/600016/",
+        ):
+            with self.subTest(url=url):
+                platform = identify_platform(url)
+                self.assertEqual(platform["id"], "10jqka")
+                self.assertEqual(platform["preferred_strategies"][:3], ["playwright", "opencli_browser", "jina"])
+
+    def test_identify_eniu_as_explicit_platform(self):
+        platform = identify_platform("https://eniu.com/gu/sh600016")
+        self.assertEqual(platform["id"], "eniu")
+        self.assertEqual(platform["preferred_strategies"][:3], ["playwright", "opencli_browser", "jina"])
+
+    def test_identify_xueqiu_as_explicit_platform(self):
+        for url in (
+            "https://xueqiu.com/S/SH600016",
+            "https://stockn.xueqiu.com/",
+        ):
+            with self.subTest(url=url):
+                platform = identify_platform(url)
+                self.assertEqual(platform["id"], "xueqiu")
+                self.assertEqual(platform["preferred_strategies"][:3], ["playwright", "jina", "opencli_browser"])
+
+    def test_identify_sinafinance_expanded_domains_as_platform(self):
+        platform = identify_platform("https://vip.stock.finance.sina.com.cn/corp/go.php/vCI_CorpInfo/stockid/600016.phtml")
+        self.assertEqual(platform["id"], "sinafinance")
+
+    def test_identify_eastmoney_expanded_domains_as_platform(self):
+        for url in (
+            "https://data.eastmoney.com/stockdata/600016.html",
+            "https://quote.eastmoney.com/",
+            "https://guba.eastmoney.com/",
+        ):
+            with self.subTest(url=url):
+                platform = identify_platform(url)
+                self.assertEqual(platform["id"], "eastmoney")
+                self.assertEqual(platform["preferred_strategies"][:3], ["playwright", "jina", "opencli_browser"])
 
 
 class ContentCleanupTests(unittest.TestCase):
@@ -1630,6 +1867,103 @@ Markdown Content:
         self.assertIn("## 阿里云一面", result["content"])
         self.assertNotIn("# 首页", result["content"])
         self.assertNotIn("登录 / 注册", result["content"])
+        self.assertNotIn("相关推荐", result["content"])
+        self.assertNotIn("影石前端日常实习（已oc）", result["content"])
+        self.assertNotIn("徐新曜", result["content"])
+        self.assertNotIn("04-07 17:08", result["content"])
+        self.assertNotIn("招聘动态", result["content"])
+        self.assertNotIn("这个offer值得去吗？", result["content"])
+        self.assertNotIn("## 面经##校招##字节跳动", result["content"])
+        self.assertNotIn("机械人，说说你的烦心事", result["content"])
+        self.assertNotIn("147969次浏览", result["content"])
+        self.assertNotIn("企业服务", result["content"])
+        self.assertNotIn("牛客科技©2026", result["content"])
+
+    def test_zhihu_cloakbrowser_output_extracts_plaintext_answers_only(self):
+        result = postprocess_content(
+            ZHIHU_CLOAK_RAW,
+            "https://www.zhihu.com/question/10434775822",
+            {"id": "zhihu", "name": "知乎", "preferred_strategies": ["cloakbrowser", "opencli_browser", "jina", "playwright"]},
+        )
+
+        self.assertTrue(result["success"])
+        self.assertIn("# claude怎么订阅最便宜？", result["content"])
+        self.assertIn("## 回答", result["content"])
+        self.assertIn("1. 麻小辣", result["content"])
+        self.assertIn("2. 孤飞", result["content"])
+        self.assertIn("尼日利亚区的Claude订阅是全球最低价", result["content"])
+        self.assertIn("Claude Pro 在苹果尼日利亚区的订阅价只要 88 元人民币左右", result["content"])
+        self.assertIn("起步的订阅，等于直接打了折。", result["content"])
+        self.assertNotIn("51 个回答", result["content"])
+        self.assertNotIn("默认排序", result["content"])
+        self.assertNotIn("赞同 801", result["content"])
+        self.assertNotIn("66 条评论", result["content"])
+        self.assertNotIn("美好如你，岁月如初。", result["content"])
+        self.assertNotIn("起\n步\n的", result["content"])
+        self.assertNotIn("𝑃", result["content"])
+        self.assertNotIn("∗∗", result["content"])
+
+    def test_10jqka_finance_stock_postprocessing_returns_structured_finance_content(self):
+        result = postprocess_content(
+            FINANCE_STOCK_10JQKA_RAW,
+            "https://basic.10jqka.com.cn/600016/finance.html",
+            {"id": "10jqka", "name": "同花顺", "preferred_strategies": ["playwright", "opencli_browser", "jina"], "cleanup_profile": "finance_stock"},
+        )
+
+        self.assertTrue(result["success"])
+        self.assertIn("# 民生银行(600016) 财务概况", result["content"])
+        self.assertIn("## 财务指标", result["content"])
+        self.assertIn("| 科目 | 2026-03-31 | 2025-12-31 |", result["content"])
+        self.assertIn("| 净利润 | 115.14亿 | 305.63亿 |", result["content"])
+        self.assertIn("| 资产总计 | 7.85万亿元 |", result["content"])
+        self.assertNotIn("谢谢您的支持", result["content"])
+        self.assertNotIn("最新价： --", result["content"])
+        self.assertNotIn("杜邦分析原理", result["content"])
+
+    def test_sinafinance_stock_postprocessing_uses_finance_stock_logic(self):
+        result = postprocess_content(
+            SINAFINANCE_STOCK_RAW,
+            "https://vip.stock.finance.sina.com.cn/corp/go.php/vCI_CorpInfo/stockid/600016.phtml",
+            {"id": "sinafinance", "name": "新浪财经", "preferred_strategies": ["jina", "opencli_browser", "playwright"], "cleanup_profile": "finance_stock"},
+        )
+
+        self.assertTrue(result["success"])
+        self.assertIn("# 民生银行(600016)公司资料", result["content"])
+        self.assertIn("公司名称：中国民生银行股份有限公司", result["content"])
+        self.assertIn("上市日期：2000-12-19", result["content"])
+        self.assertIn("主营业务：吸收社会公众存款", result["content"])
+        self.assertNotIn("新浪首页", result["content"])
+        self.assertNotIn("上一组", result["content"])
+
+    def test_sinafinance_news_article_postprocessing_still_extracts_body(self):
+        result = postprocess_content(
+            SINAFINANCE_NEWS_RAW,
+            "https://finance.sina.com.cn/jjxw/2025-03-31/doc-inerpcss8403475.shtml",
+            {"id": "sinafinance", "name": "新浪财经", "preferred_strategies": ["jina", "opencli_browser", "playwright"], "cleanup_profile": "finance_stock"},
+        )
+
+        self.assertTrue(result["success"])
+        self.assertIn("# 民生银行(600016.SH)2024年净利润为322.96亿元、较去年同期下降9.85%", result["content"])
+        self.assertIn("**发布时间**: 2025年03月31日 09:48", result["content"])
+        self.assertIn("**来源**: 界面新闻", result["content"])
+        self.assertIn("公司营业总收入为1362.90亿元", result["content"])
+        self.assertIn("公司最新ROE为5.02%", result["content"])
+        self.assertNotIn("新浪财经APP", result["content"])
+
+    def test_eastmoney_stock_page_postprocessing_does_not_fall_back_to_news_list(self):
+        result = postprocess_content(
+            EASTMONEY_STOCK_RAW,
+            "https://data.eastmoney.com/stockdata/600016.html",
+            {"id": "eastmoney", "name": "东方财富", "preferred_strategies": ["playwright", "jina", "opencli_browser"], "cleanup_profile": "finance_stock"},
+        )
+
+        self.assertTrue(result["success"])
+        self.assertNotIn("# 东方财富财经要闻", result["content"])
+        self.assertIn("# 民生银行股票_数据_资料_信息", result["content"])
+        self.assertIn("所属板块", result["content"])
+        self.assertIn("主营业务", result["content"])
+        self.assertIn("| 交易时间 | 融资 | 融券 |", result["content"])
+        self.assertNotIn("[财经]", result["content"])
 
 
 if __name__ == "__main__":

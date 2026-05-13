@@ -86,10 +86,13 @@ URL
 - 知乎
 - 脉脉
 - 牛客
+- 同花顺
 - 微博
 - X / Twitter
 - B站
 - Reddit
+- 亿牛网
+- 雪球
 - MeowVPS
 - HostLoc
 - NodeSeek
@@ -151,16 +154,20 @@ URL
   - 保留标题、时间、来源、摘要、正文
 
 - `东方财富`
-  - 支持财经首页资讯流和 `/a/<id>.html` 文章页
-  - 去掉行情壳、刷新控件、评论和相关阅读
+  - 支持财经首页资讯流、`/a/<id>.html` 文章页、`data.eastmoney.com` 个股数据页
+  - 个股页会优先保留核心题材、主营业务、融资融券和财务数据表
 
 - `新浪财经`
-  - 支持首页资讯流和 `doc-*.shtml` 文章页
-  - 去掉登录块、分享块、评论区和页脚
+  - 支持首页资讯流、`doc-*.shtml` 新闻页、`vip.stock.finance.sina.com.cn` 个股资料页
+  - 个股页会优先保留公司资料、主营业务、上市信息等结构化信息
 
 - `华尔街见闻`
   - 支持首页资讯流和 `/articles/<id>` 文章页
   - 去掉行情壳、登录/收藏/评论区和风险提示尾部
+
+- `同花顺 / 亿牛网 / 雪球`
+  - 面向个股财务 / 估值 / 资料页
+  - 优先保留财务指标、关键估值数字、公司资料和结构化表格
 
 #### 论坛 / 社区
 
@@ -392,6 +399,7 @@ url-reader/
     ├── wechat_auth.py
     └── strategies/
         ├── __init__.py
+        ├── cloakbrowser_strategy.py
         ├── firecrawl.py
         ├── jina.py
         ├── opencli_browser.py
@@ -410,7 +418,7 @@ url-reader/
 ## 测试
 
 ```bash
-python -m unittest tests.test_content tests.test_formatter tests.test_opencli_strategy
+python -m unittest tests.test_main tests.test_opencli_strategy tests.test_cloakbrowser_strategy tests.test_content tests.test_formatter tests.test_playwright_strategy
 ```
 
 ## License
