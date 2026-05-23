@@ -27,14 +27,28 @@ _CLEANUP_RULES = {
             '评论 取消',
             '您的电子邮箱',
             '必填项已用',
+            '版权声明',
+            '文章版权归作者所有',
+            '打赏作者',
+            '分享到',
+            'Share this',
+            'About the Author',
+            '关于作者',
         ),
         'drop_exact': {
             '首页', '登录', '注册', '下载APP', '下载 App', '打开APP', '打开 App',
             '分享', '收藏', '举报', '反馈',
+            '搜索', '点赞', '打赏', '二维码', '海报', '表情',
+            '暂无评论', '没有评论', '回到顶部', '返回顶部', 'Back to top',
+            '订阅', 'Subscribe',
         },
         'drop_prefixes': (
             '上一篇', '下一篇', '相关阅读', '相关推荐', '推荐阅读', '热门推荐',
             '猜你喜欢', '更多推荐',
+            'Powered by',
+            'Tags:', '标签：', '标签:',
+            'Filed under',
+            'Category:', 'Posted in',
         ),
         'drop_contains': (
             'ICP备',
@@ -45,11 +59,28 @@ _CLEANUP_RULES = {
             '免责声明',
             'Proudly powered by WordPress',
             'Built with WordPress',
+            'All rights reserved',
+            'Copyright ©',
+            '未经允许请勿转载',
+            '转载请注明',
+            '备案号',
+            '京公网安备',
+            '扫码关注',
+            '扫一扫',
+            'Cookie Policy',
+            'Privacy Policy',
+            'Terms of Service',
+            '使用条款',
+            '服务条款',
         ),
         'drop_regexes': (
             r'^[\s\W_]+$',
             r'^\d+\s*$',
             r'^\d+\s*/\s*\d+\s*$',
+            r'^\d+\s*次(阅读|浏览|查看)\s*$',
+            r'^\d+\s*(views?|reads?)\s*$',
+            r'^\d+\s*(赞|评论|收藏|转发|likes?|comments?|shares?)\s*$',
+            r'^\[(没有评论|暂无评论|No comments)\]',
         ),
     },
     'article_feed': {
@@ -664,6 +695,9 @@ def _apply_platform_cleanup(markdown: str, platform: dict) -> tuple[str, dict]:
         if not line:
             if cleaned_lines and cleaned_lines[-1] != '':
                 cleaned_lines.append('')
+            continue
+
+        if _is_standalone_linked_image(line):
             continue
 
         normalized_image = _normalize_link_wrapped_image(line)
@@ -3073,6 +3107,15 @@ def _normalize_invisible_whitespace(text: str) -> str:
         .replace('\u200f', '')
         .replace('\xa0', ' ')
     )
+
+
+_LINKED_IMAGE_RE = re.compile(r'\[!\[[^\]]*\]\([^)]+\)\]\([^)]+\)')
+
+
+def _is_standalone_linked_image(line: str) -> bool:
+    """Detect lines consisting solely of linked images — typically ad banners."""
+    stripped = _LINKED_IMAGE_RE.sub('', line).strip()
+    return bool(_LINKED_IMAGE_RE.search(line)) and not stripped
 
 
 def _normalize_link_wrapped_image(line: str) -> str:

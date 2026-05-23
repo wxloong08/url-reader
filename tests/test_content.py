@@ -1966,5 +1966,162 @@ Markdown Content:
         self.assertNotIn("[财经]", result["content"])
 
 
+GENERIC_BLOG_RAW = """Title: nbdnet : 15元/月/1C0.5G20G硬盘/50Mbps/100G流量/沪日IX
+
+URL Source: https://maobuni.com/2026/04/23/nbdnet/
+
+Markdown Content:
+
+搜索
+
+[![lisahost](https://maobuni.com/wp-content/uploads/2025/04/lisahosttop.jpg)](https://lisahost.com/link.php?id=17)[![ipcola](https://maobuni.com/wp-content/uploads/2026/04/ipcolaadpicture.png)](https://maobuni.com/2026/04/01/ipcola/)
+
+![](https://maobuni.com/wp-content/uploads/2022/07/bottom120090.png)
+
+# nbdnet : 15元/月/1C0.5G20G硬盘/50Mbps/100G流量/沪日IX
+
+453次阅读
+
+[没有评论](https://maobuni.com/2026/04/23/nbdnet/#comments)
+
+nbdnet ，国人商家，提供沪日专线 IXP中转产品。
+
+| 套餐 | CPU | 内存 |
+| SHAIX-JP-1 | 1核 | 0.5GB |
+
+官方网站：https://cloud.nbdnet.com
+
+版权声明：
+
+作者：猫不腻
+
+文章版权归作者所有，未经允许请勿转载。
+
+点赞
+
+打赏
+
+二维码
+
+海报
+
+[上一篇xxx](https://maobuni.com/prev/)
+
+[下一篇yyy](https://maobuni.com/next/)
+
+评论
+
+表情
+"""
+
+
+class GenericCleanupTests(unittest.TestCase):
+    def test_generic_drops_ad_banner_linked_images(self):
+        platform = identify_platform("https://maobuni.com/2026/04/23/nbdnet/")
+        result = postprocess_content(GENERIC_BLOG_RAW, "https://maobuni.com/2026/04/23/nbdnet/", platform)
+        self.assertTrue(result["success"])
+        self.assertNotIn("lisahost", result["content"])
+        self.assertNotIn("ipcola", result["content"])
+
+    def test_generic_drops_navigation_chrome(self):
+        platform = identify_platform("https://maobuni.com/2026/04/23/nbdnet/")
+        result = postprocess_content(GENERIC_BLOG_RAW, "https://maobuni.com/2026/04/23/nbdnet/", platform)
+        content = result["content"]
+        self.assertNotIn("搜索", content)
+        self.assertNotIn("点赞", content)
+        self.assertNotIn("打赏", content)
+        self.assertNotIn("二维码", content)
+        self.assertNotIn("海报", content)
+        self.assertNotIn("表情", content)
+
+    def test_generic_drops_view_counts(self):
+        platform = identify_platform("https://maobuni.com/2026/04/23/nbdnet/")
+        result = postprocess_content(GENERIC_BLOG_RAW, "https://maobuni.com/2026/04/23/nbdnet/", platform)
+        self.assertNotIn("453次阅读", result["content"])
+
+    def test_generic_drops_no_comments_link(self):
+        platform = identify_platform("https://maobuni.com/2026/04/23/nbdnet/")
+        result = postprocess_content(GENERIC_BLOG_RAW, "https://maobuni.com/2026/04/23/nbdnet/", platform)
+        self.assertNotIn("没有评论", result["content"])
+
+    def test_generic_truncates_at_copyright_section(self):
+        platform = identify_platform("https://maobuni.com/2026/04/23/nbdnet/")
+        result = postprocess_content(GENERIC_BLOG_RAW, "https://maobuni.com/2026/04/23/nbdnet/", platform)
+        content = result["content"]
+        self.assertNotIn("版权声明", content)
+        self.assertNotIn("未经允许请勿转载", content)
+
+    def test_generic_drops_prev_next_navigation(self):
+        platform = identify_platform("https://maobuni.com/2026/04/23/nbdnet/")
+        result = postprocess_content(GENERIC_BLOG_RAW, "https://maobuni.com/2026/04/23/nbdnet/", platform)
+        self.assertNotIn("上一篇", result["content"])
+        self.assertNotIn("下一篇", result["content"])
+
+    def test_generic_keeps_article_body(self):
+        platform = identify_platform("https://maobuni.com/2026/04/23/nbdnet/")
+        result = postprocess_content(GENERIC_BLOG_RAW, "https://maobuni.com/2026/04/23/nbdnet/", platform)
+        content = result["content"]
+        self.assertIn("nbdnet", content)
+        self.assertIn("国人商家", content)
+        self.assertIn("SHAIX-JP-1", content)
+        self.assertIn("cloud.nbdnet.com", content)
+
+    def test_generic_drops_engagement_counts(self):
+        raw = """Title: Test
+
+URL Source: https://example.com/post
+
+Markdown Content:
+
+# Test Article
+
+Some content here.
+
+128 likes
+
+45 comments
+
+23 shares
+
+999次浏览
+
+Related Posts
+"""
+        platform = identify_platform("https://example.com/post")
+        result = postprocess_content(raw, "https://example.com/post", platform)
+        content = result["content"]
+        self.assertIn("Some content here", content)
+        self.assertNotIn("128 likes", content)
+        self.assertNotIn("45 comments", content)
+        self.assertNotIn("23 shares", content)
+        self.assertNotIn("999次浏览", content)
+
+    def test_generic_drops_icp_and_copyright_lines(self):
+        raw = """Title: Test
+
+URL Source: https://example.com/post
+
+Markdown Content:
+
+# Test Article
+
+Content body.
+
+京公网安备 11010802012345号
+
+Copyright © 2026 Example Inc. All rights reserved.
+
+Powered by Hugo
+"""
+        platform = identify_platform("https://example.com/post")
+        result = postprocess_content(raw, "https://example.com/post", platform)
+        content = result["content"]
+        self.assertIn("Content body", content)
+        self.assertNotIn("京公网安备", content)
+        self.assertNotIn("Copyright", content)
+        self.assertNotIn("All rights reserved", content)
+        self.assertNotIn("Powered by Hugo", content)
+
+
 if __name__ == "__main__":
     unittest.main()
