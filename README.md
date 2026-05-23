@@ -31,6 +31,7 @@ URL
 - 没有“全局固定策略顺序”。
 - 每个平台的策略顺序都定义在 [scripts/platforms.py](scripts/platforms.py)。
 - 某些策略在本机不可用时会失败回退；当前 `firecrawl` 和 `cloakbrowser` 会在进入主循环前被预过滤。
+- 如果任一非 OpenCLI 策略返回登录页、验证页或“需要登录/验证”类错误，调度器会把 `OpenCLI Browser` 提到下一位再抓一次，并继续走同一套平台清洗逻辑。
 
 ## 当前策略
 
@@ -52,6 +53,7 @@ URL
 
 - 复用本机 `opencli browser extract`
 - 适合“网页公开可见，但 Jina / Playwright 不稳定”的场景
+- 也会作为登录页 / 验证页回退：当其他策略检测到需要登录或验证时，本轮尚未试过 OpenCLI 就会立即尝试它
 - 当前对 `知乎 question` 页特别有用
 - 需要本机安装 `opencli`
 
@@ -414,6 +416,7 @@ url-reader/
 - `雪球` 当前公开入口反爬较重，尚未纳入稳定支持范围
 - `Playwright` 和 `OpenCLI Browser` 都依赖本机浏览器环境，CI 或纯服务器环境下未必稳定
 - 强反爬站点不保证稳定成功
+- OpenCLI 回退只在检测到登录/验证类失败时插入；如果站点完全不向本机浏览器开放内容，仍会失败
 
 ## 测试
 

@@ -14,23 +14,39 @@ description: 智能读取任意URL内容，支持内容站、论坛站、求职�
 ### 1. 读取并显示
 
 ```bash
-cd D:\skills\url-reader
-python -m scripts.main <url>
+python D:\skills\url-reader\read.py <url>
 ```
 
-### 2. 读取并保存到默认目录
+### 2. LLM 精简模式（推荐 Agent 调用）
 
 ```bash
-python -m scripts.main <url> --save
+python D:\skills\url-reader\read.py <url> -q
+python D:\skills\url-reader\read.py <url> -q --max-chars 4000
 ```
 
-### 3. 读取并保存到指定目录
+`-q` / `--quiet`：省略所有装饰性标题和元数据，只输出正文内容。`--max-chars N` 截断标准输出到 N 个字符（不影响 `--save` 写入磁盘）。
+
+### 3. 批量读取
 
 ```bash
-URL_READER_OUTPUT_DIR="D:\custom\path" python -m scripts.main <url> --save
+python D:\skills\url-reader\read.py <url1> <url2> <url3> -q
 ```
 
-### 4. WeChat 认证管理
+多个 URL 顺序处理，quiet 模式下以 `--- url ---` 分隔。
+
+### 4. 读取并保存到默认目录
+
+```bash
+python D:\skills\url-reader\read.py <url> --save
+```
+
+### 5. 读取并保存到指定目录
+
+```bash
+$env:URL_READER_OUTPUT_DIR = "D:\custom\path"; python D:\skills\url-reader\read.py <url> --save
+```
+
+### 6. WeChat 认证管理
 
 ```bash
 # 首次登录（打开浏览器扫码）
@@ -40,7 +56,7 @@ python -m scripts.wechat_auth setup
 python -m scripts.wechat_auth status
 ```
 
-### 5. WeChat 长链接转短链接
+### 7. WeChat 长链接转短链接
 
 ```bash
 python -m scripts.url_converter "https://mp.weixin.qq.com/s?__biz=xxx&mid=xxx&sn=xxx"
@@ -61,6 +77,7 @@ python -m scripts.url_converter "https://mp.weixin.qq.com/s?__biz=xxx&mid=xxx&sn
 │                  ↓                        │
 │              Playwright 兜底              │
 │  自动跳过不可用策略，按平台优先级尝试    │
+│  登录/验证类失败会立即插入 OpenCLI 回退   │
 └─────────────────────────────────────┘
      ↓
 ┌─────────────┐
@@ -80,6 +97,7 @@ python -m scripts.url_converter "https://mp.weixin.qq.com/s?__biz=xxx&mid=xxx&sn
 - 复用本机 `opencli browser extract` 的渲染与正文提取
 - 中文站兼容性最好（Jina 常返回 451/503 的平台都能用）
 - **2026-05-07 升级为全平台通用中层策略**，不再仅限知乎/Reddit
+- **2026-05-16 增加登录/验证页回退**：任一非 OpenCLI 策略返回“页面需要验证 / 需要登录 / 登录页”等错误时，如果本轮还没试过 OpenCLI，会立即尝试 OpenCLI 并继续走平台清洗
 
 ### 策略 3：Jina Reader API
 
@@ -102,6 +120,8 @@ python -m scripts.url_converter "https://mp.weixin.qq.com/s?__biz=xxx&mid=xxx&sn
 - 需要首次手动登录
 
 ## 支持的平台
+
+表中是常规策略顺序；运行中一旦检测到登录/验证类失败，会优先插入 `OpenCLI Browser Extract` 回退，避免把登录壳误当正文。
 
 | 平台 | 域名 | 策略优先级 |
 |------|------|-----------|
@@ -236,6 +256,7 @@ output-dir/
 
 ```
 url-reader/
+├── read.py                     # 入口脚本（可从任意目录调用）
 ├── SKILL.md                    # 本文档
 ├── README.md                   # 人类可读概述
 ├── metadata.json               # 版本 2.0.0
@@ -299,7 +320,7 @@ python -m unittest tests.test_main tests.test_opencli_strategy tests.test_cloakb
 ## 常见问题
 
 **Q: 微信公众号读取失败？**
-A: 微信反爬最严格。运行 `python -m scripts.wechat_auth setup` 设置登录态，或切换到 Firecrawl。
+A: 微信反爬最严格。运行 `python -m scripts.wechat_auth setup` 设置登录态；如果其他策略返回登录/验证类失败，系统会自动插入 OpenCLI 回退再清洗。
 
 **Q: Firecrawl 额度用完？**
 A: 自动降级到 Jina Reader（免费），无需操作。

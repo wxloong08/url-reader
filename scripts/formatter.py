@@ -5,10 +5,15 @@ Markdown output formatting.
 import re
 
 
-def format_result(result: dict, url: str) -> str:
+def format_result(result: dict, url: str, quiet: bool = False) -> str:
     """Format a read result (success or failure) as Markdown."""
     if not result.get('success'):
+        if quiet:
+            errors = '; '.join(result.get('errors', ['unknown error']))
+            return f"[ERROR] {errors}"
         return _format_failure(result, url)
+    if quiet:
+        return result.get('content', '').strip()
     return _format_success(result, url)
 
 

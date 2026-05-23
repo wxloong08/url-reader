@@ -1,6 +1,47 @@
 import unittest
 
-from scripts.formatter import format_saved_result
+from scripts.formatter import format_result, format_saved_result
+
+
+class FormatResultQuietTests(unittest.TestCase):
+    def test_quiet_success_returns_content_only(self):
+        result = {
+            "success": True,
+            "strategy": "Firecrawl",
+            "platform": {"id": "generic", "name": "通用网站"},
+            "content": "# Title\n\nBody text",
+        }
+        output = format_result(result, "https://example.com", quiet=True)
+        self.assertEqual(output, "# Title\n\nBody text")
+        self.assertNotIn("**来源**", output)
+        self.assertNotIn("**读取策略**", output)
+        self.assertNotIn("**原文链接**", output)
+
+    def test_quiet_failure_returns_error_line(self):
+        result = {
+            "success": False,
+            "platform": {"id": "generic", "name": "通用网站"},
+            "errors": ["Jina: HTTP 451", "Firecrawl: timeout"],
+        }
+        output = format_result(result, "https://example.com", quiet=True)
+        self.assertEqual(output, "[ERROR] Jina: HTTP 451; Firecrawl: timeout")
+
+    def test_quiet_failure_no_errors_key(self):
+        result = {"success": False, "platform": {"id": "generic", "name": "通用网站"}}
+        output = format_result(result, "https://example.com", quiet=True)
+        self.assertEqual(output, "[ERROR] unknown error")
+
+    def test_non_quiet_success_includes_metadata(self):
+        result = {
+            "success": True,
+            "strategy": "Jina Reader",
+            "platform": {"id": "generic", "name": "通用网站"},
+            "content": "Body",
+        }
+        output = format_result(result, "https://example.com", quiet=False)
+        self.assertIn("**来源**: 通用网站", output)
+        self.assertIn("**读取策略**: Jina Reader", output)
+        self.assertIn("**原文链接**: https://example.com", output)
 
 
 class SavedFormatterTests(unittest.TestCase):

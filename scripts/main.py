@@ -2,10 +2,14 @@
 URL Reader — orchestrator / entry point.
 
 Usage:
-    python -m scripts.main <url>          # read and print
-    python -m scripts.main <url> --save   # read and save
+    python -m scripts.main <url>                    # read and print
+    python -m scripts.main <url> -q                 # quiet mode (LLM-friendly)
+    python -m scripts.main <url> --max-chars 4000   # truncate output
+    python -m scripts.main <url1> <url2>            # batch read
+    python -m scripts.main <url> --save             # read and save
 """
 
+import argparse
 import re
 import sys
 
@@ -65,10 +69,18 @@ def read_url(url: str, verbose: bool = True) -> dict:
     if verbose:
         print(f"平台识别: {platform['name']}")
 
-    strategies = _filter_available_strategies(platform['preferred_strategies'])
+    strategies = list(_filter_available_strategies(platform['preferred_strategies']))
     errors = []
+    attempted: set[str] = set()
 
-    for strategy_key in strategies:
+    index = 0
+    while index < len(strategies):
+        strategy_key = strategies[index]
+        index += 1
+        if strategy_key in attempted:
+            continue
+        attempted.add(strategy_key)
+
         strategy = _STRATEGIES.get(strategy_key)
         if strategy is None:
             continue
@@ -86,9 +98,12 @@ def read_url(url: str, verbose: bool = True) -> dict:
             )
             processed = postprocess_content(content_for_postprocess, url, platform)
             if not processed.get('success'):
-                errors.append(f"{strategy.name}: {processed.get('error')}")
+                error = processed.get('error')
+                errors.append(f"{strategy.name}: {error}")
                 if verbose:
-                    print(processed.get('error'))
+                    print(error)
+                if _should_try_opencli_fallback(strategy_key, attempted, error):
+                    _promote_opencli_next(strategies, index)
                 continue
 
             if verbose:
@@ -102,15 +117,60 @@ def read_url(url: str, verbose: bool = True) -> dict:
             result['platform'] = platform
             return result
 
-        errors.append(f"{strategy.name}: {result.get('error')}")
+        error = result.get('error')
+        errors.append(f"{strategy.name}: {error}")
         if verbose:
-            print(f"{result.get('error')}")
+            print(f"{error}")
+        if _should_try_opencli_fallback(strategy_key, attempted, error):
+            _promote_opencli_next(strategies, index)
 
     return {
         'success': False,
         'platform': platform,
         'errors': errors,
     }
+
+
+def _should_try_opencli_fallback(strategy_key: str, attempted: set[str], error: str | None) -> bool:
+    if strategy_key == 'opencli_browser':
+        return False
+    if 'opencli_browser' in attempted:
+        return False
+    return _is_login_or_verification_error(error or '')
+
+
+def _promote_opencli_next(strategies: list[str], index: int) -> None:
+    try:
+        existing_index = strategies.index('opencli_browser', index)
+    except ValueError:
+        strategies.insert(index, 'opencli_browser')
+        return
+
+    if existing_index == index:
+        return
+    strategies.pop(existing_index)
+    strategies.insert(index, 'opencli_browser')
+
+
+def _is_login_or_verification_error(error: str) -> bool:
+    text = error.lower()
+    markers = (
+        '页面需要验证',
+        '需要手动验证',
+        '需要验证',
+        '请先登录',
+        '需要登录',
+        '登录后',
+        '登录页',
+        'sign in',
+        'log in',
+        'login',
+        'access denied',
+        'blocked',
+        'verify',
+        'verification',
+    )
+    return any(marker in text for marker in markers)
 
 
 def _prepare_content_for_postprocess(content: str, metadata: dict, url: str) -> str:
@@ -196,6 +256,16 @@ def _append_replies(content: str, replies: list[dict[str, str]], start_index: in
     return '\n'.join(lines).strip()
 
 
+def _truncate(text: str, max_chars: int) -> str:
+    """Truncate text to max_chars, breaking at a line boundary when possible."""
+    if max_chars <= 0 or len(text) <= max_chars:
+        return text
+    cut = text[:max_chars].rfind('\n')
+    if cut < max_chars * 0.7:
+        cut = max_chars
+    return f"{text[:cut]}\n\n[...truncated, {cut}/{len(text)} chars shown]"
+
+
 def read_and_save(url: str, output_dir: str | None = None, verbose: bool = True) -> dict:
     """Read URL and save content + images to disk."""
     result = read_url(url, verbose=verbose)
@@ -218,39 +288,52 @@ def read_and_save(url: str, output_dir: str | None = None, verbose: bool = True)
 
 
 def main():
-    if len(sys.argv) < 2:
-        print("=" * 60)
-        print("URL Reader - 智能网页内容读取器")
-        print("=" * 60)
-        print("\n用法:")
-        print("  python -m scripts.main <url>              # 读取并显示")
-        print("  python -m scripts.main <url> --save       # 读取并保存")
-        print("\n示例:")
-        print("  python -m scripts.main https://mp.weixin.qq.com/s/xxxxx --save")
-        print("\n策略优先级: 按平台配置自动尝试")
-        print("  (可选增强: CloakBrowser；未启用或依赖缺失时自动跳过)")
+    parser = argparse.ArgumentParser(description="URL Reader - 智能网页内容读取器")
+    parser.add_argument('urls', nargs='*', help='要读取的 URL')
+    parser.add_argument('--save', action='store_true', help='读取并保存到磁盘')
+    parser.add_argument('-q', '--quiet', action='store_true',
+                        help='精简输出，省略装饰性标题和元数据（适合 LLM 调用）')
+    parser.add_argument('--max-chars', type=int, default=0, metavar='N',
+                        help='截断标准输出到 N 个字符（不影响 --save 写入磁盘的内容）')
+    args = parser.parse_args()
+
+    if not args.urls:
+        parser.print_help()
         return
 
-    url = sys.argv[1]
-    save_mode = '--save' in sys.argv
+    verbose = not args.quiet
+    multi = len(args.urls) > 1
 
-    print(f"\n{'=' * 60}")
-    print(f"正在读取: {url}")
-    print(f"{'=' * 60}\n")
+    for i, url in enumerate(args.urls):
+        if multi and i > 0:
+            print()
 
-    if save_mode:
-        result = read_and_save(url)
-        if result.get('success') and result.get('save'):
+        if verbose:
             print(f"\n{'=' * 60}")
-            print("读取并保存成功")
-            print(f"{'=' * 60}")
-    else:
-        result = read_url(url)
-        output = format_result(result, url)
-        print(f"\n{'=' * 60}")
-        print("读取结果")
-        print(f"{'=' * 60}\n")
-        print(output)
+            print(f"正在读取: {url}")
+            print(f"{'=' * 60}\n")
+        elif multi:
+            print(f"--- {url} ---")
+
+        if args.save:
+            result = read_and_save(url, verbose=verbose)
+            if result.get('success'):
+                if verbose and result.get('save'):
+                    print(f"\n{'=' * 60}")
+                    print("读取并保存成功")
+                    print(f"{'=' * 60}")
+                elif not verbose and result.get('save'):
+                    print(f"[SAVED] {result['save'].get('md_file', 'ok')}")
+            else:
+                print(format_result(result, url, quiet=args.quiet))
+        else:
+            result = read_url(url, verbose=verbose)
+            output = format_result(result, url, quiet=args.quiet)
+            if verbose:
+                print(f"\n{'=' * 60}")
+                print("读取结果")
+                print(f"{'=' * 60}\n")
+            print(_truncate(output, args.max_chars))
 
 
 if __name__ == "__main__":
