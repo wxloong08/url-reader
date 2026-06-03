@@ -11,7 +11,7 @@ PLATFORMS = {
     'wechat': {
         'name': '微信公众号',
         'domains': ['mp.weixin.qq.com'],
-        'preferred_strategies': ['firecrawl', 'opencli_browser', 'playwright', 'jina'],
+        'preferred_strategies': ['opencli_browser', 'playwright', 'firecrawl', 'jina'],
         'cleanup_profile': 'wechat_article',
     },
     'xiaohongshu': {

@@ -18,7 +18,7 @@ from scripts.platforms import identify_platform
 from scripts.strategies.firecrawl import FirecrawlStrategy
 from scripts.strategies.jina import JinaStrategy
 from scripts.strategies.cloakbrowser_strategy import CloakBrowserStrategy
-from scripts.strategies.opencli_browser import OpenCLIBrowserStrategy
+from scripts.strategies.chrome_cli_strategy import ChromeCLIStrategy
 from scripts.strategies.playwright_strategy import PlaywrightStrategy
 from scripts.content import extract_forum_replies_page, postprocess_content
 from scripts.formatter import format_result, format_saved_result
@@ -29,7 +29,7 @@ _STRATEGIES = {
     'firecrawl': FirecrawlStrategy(),
     'cloakbrowser': CloakBrowserStrategy(),
     'jina': JinaStrategy(),
-    'opencli_browser': OpenCLIBrowserStrategy(),
+    'opencli_browser': ChromeCLIStrategy(),
     'playwright': PlaywrightStrategy(),
 }
 
@@ -106,9 +106,17 @@ def read_url(url: str, verbose: bool = True) -> dict:
                     _promote_opencli_next(strategies, index)
                 continue
 
+            final_content = processed.get('content', result.get('content', ''))
+            if _is_content_too_short(final_content, platform):
+                msg = f"{strategy.name}: 内容过短 ({len(final_content)} 字符)，尝试下一策略"
+                errors.append(msg)
+                if verbose:
+                    print(msg)
+                continue
+
             if verbose:
                 print(f"{strategy.name} 读取成功")
-            result['content'] = processed.get('content', result.get('content', ''))
+            result['content'] = final_content
             result['metadata'] = {
                 **result.get('metadata', {}),
                 **processed.get('metadata', {}),
@@ -129,6 +137,19 @@ def read_url(url: str, verbose: bool = True) -> dict:
         'platform': platform,
         'errors': errors,
     }
+
+
+_MIN_CONTENT_LENGTH = {
+    'wechat': 2000,
+}
+
+
+def _is_content_too_short(content: str, platform: dict) -> bool:
+    pid = platform.get('id', '')
+    min_len = _MIN_CONTENT_LENGTH.get(pid)
+    if min_len is None:
+        return False
+    return len(content) < min_len
 
 
 def _should_try_opencli_fallback(strategy_key: str, attempted: set[str], error: str | None) -> bool:
