@@ -7,6 +7,7 @@ no subprocess, no opencli dependency.
 import json
 import os
 import sys
+import urllib.request
 
 from scripts.strategies import FetchStrategy
 
@@ -23,14 +24,17 @@ class ChromeCLIStrategy(FetchStrategy):
         if not url.startswith(("http://", "https://")):
             return {"success": False, "error": f"不支持的 URL scheme: {url[:20]}"}
 
-        page_id = ""
         try:
-            status = chrome_cli.send_command("tabs", op="list", session=self.session)
-            if not status.get("ok", True):
-                return {"success": False, "error": "daemon 未连接"}
+            req = urllib.request.Request(
+                f"{chrome_cli.DAEMON_URL}/status",
+                headers={"X-OpenCLI": "1"},
+            )
+            with urllib.request.urlopen(req, timeout=5) as resp:
+                json.loads(resp.read())
         except Exception as e:
             return {"success": False, "error": f"daemon 连接失败: {e}"}
 
+        page_id = ""
         try:
             nav = chrome_cli.send_command("navigate", url=url, session=self.session)
             page_id = nav.get("page", "")
@@ -73,11 +77,19 @@ class ChromeCLIStrategy(FetchStrategy):
         except Exception as e:
             return {"success": False, "error": f"Chrome CLI 错误: {e}"}
         finally:
+            self._close_session_tabs(page_id)
+
+    def _close_session_tabs(self, page_id: str = "") -> None:
+        try:
             if page_id:
-                try:
-                    chrome_cli.send_command("tabs", op="close", page=page_id, session=self.session)
-                except Exception:
-                    pass
+                chrome_cli.send_command("tabs", op="close", page=page_id, session=self.session)
+            tabs = chrome_cli.send_command("tabs", op="list", session=self.session)
+            for tab in tabs.get("data", []):
+                pid = tab.get("page", "")
+                if pid:
+                    chrome_cli.send_command("tabs", op="close", page=pid, session=self.session)
+        except Exception:
+            pass
 
     def _extract_wechat(self, page_id: str) -> dict | None:
         import time
