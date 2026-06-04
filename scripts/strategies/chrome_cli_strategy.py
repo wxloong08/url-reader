@@ -80,14 +80,28 @@ class ChromeCLIStrategy(FetchStrategy):
             self._close_session_tabs(page_id)
 
     def _close_session_tabs(self, page_id: str = "") -> None:
+        import time
         try:
-            if page_id:
-                chrome_cli.send_command("tabs", op="close", page=page_id, session=self.session)
+            pids = [page_id] if page_id else []
             tabs = chrome_cli.send_command("tabs", op="list", session=self.session)
             for tab in tabs.get("data", []):
                 pid = tab.get("page", "")
-                if pid:
-                    chrome_cli.send_command("tabs", op="close", page=pid, session=self.session)
+                if pid and pid not in pids:
+                    pids.append(pid)
+            for pid in pids:
+                try:
+                    chrome_cli.send_command("exec", code='location.href="about:blank"', page=pid, session=self.session)
+                    time.sleep(0.3)
+                    chrome_cli.send_command("exec", code="window.close()", page=pid, session=self.session)
+                except Exception:
+                    pass
+            time.sleep(0.3)
+            tabs = chrome_cli.send_command("tabs", op="list", session=self.session)
+            for tab in tabs.get("data", []):
+                try:
+                    chrome_cli.send_command("tabs", op="close", page=tab.get("page", ""), session=self.session)
+                except Exception:
+                    pass
         except Exception:
             pass
 
